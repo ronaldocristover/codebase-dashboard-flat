@@ -33,7 +33,7 @@ describe('Sidebar', () => {
 		await fireEvent.click(screen.getByRole('button', { name: /Produk/ }));
 		expect(screen.getByText('Semua Produk')).toBeTruthy();
 
-		sidebarCollapsed.set(true);
+		await fireEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
 
 		expect(screen.queryByText('Member')).toBeNull();
 		expect(screen.queryByText('Semua Produk')).toBeNull();
