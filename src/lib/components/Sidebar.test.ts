@@ -1,12 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
+import { tick } from 'svelte';
+import { get } from 'svelte/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://localhost/') } }));
 
-import { sidebarCollapsed } from '#lib/stores/ui';
+import { mobileNavOpen, setMobileNav, sidebarCollapsed } from '#lib/stores/ui';
 import Sidebar from './Sidebar.svelte';
 
-afterEach(() => sidebarCollapsed.set(false));
+afterEach(() => {
+	sidebarCollapsed.set(false);
+	setMobileNav(false);
+});
 
 describe('Sidebar', () => {
 	it('menampilkan logo dan menu utama', () => {
@@ -15,6 +20,24 @@ describe('Sidebar', () => {
 		expect(screen.getByText('Dashboard')).toBeTruthy();
 		expect(screen.getByText('Member')).toBeTruthy();
 		expect(screen.queryByText('Keluar')).toBeNull();
+	});
+
+	it('menu aktif berwarna royal blue di atas latar cream', () => {
+		render(Sidebar);
+		const dashboard = screen.getByRole('link', { name: 'Dashboard' });
+
+		expect(dashboard.className).toContain('bg-cream');
+		expect(dashboard.className).toContain('text-primary');
+		expect(dashboard.className).not.toContain('text-white/85');
+	});
+
+	it('menu tanpa halaman tidak menjadi tautan mati', () => {
+		render(Sidebar);
+
+		expect(screen.queryByRole('link', { name: /Pesanan/ })).toBeNull();
+		expect(screen.getByRole('button', { name: /Pesanan/ })).toBeTruthy();
+		expect(document.querySelector('a[href="/pesanan"]')).toBeNull();
+		expect(document.querySelector('a[href="/produk"]')).toBeNull();
 	});
 
 	it('membuka submenu Produk dan hanya satu submenu terbuka', async () => {
@@ -37,5 +60,30 @@ describe('Sidebar', () => {
 
 		expect(screen.queryByText('Member')).toBeNull();
 		expect(screen.queryByText('Semua Produk')).toBeNull();
+	});
+
+	it('status ciut bertahan saat komponen dipasang ulang', async () => {
+		render(Sidebar);
+		await fireEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
+		cleanup();
+
+		render(Sidebar);
+		expect(screen.queryByText('Member')).toBeNull();
+	});
+
+	it('drawer tertutup tidak bisa difokus dan tertutup dengan Escape', async () => {
+		render(Sidebar);
+		const drawer = screen.getByRole('complementary');
+		expect(drawer.className).toContain('max-md:invisible');
+
+		setMobileNav(true);
+		await tick();
+		await fireEvent.keyDown(document, { key: 'Escape' });
+		expect(get(mobileNavOpen)).toBe(false);
+	});
+
+	it('tombol ciutkan hanya untuk desktop', () => {
+		render(Sidebar);
+		expect(screen.getByRole('button', { name: 'Ciutkan menu' }).className).toContain('hidden');
 	});
 });

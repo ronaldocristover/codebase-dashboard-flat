@@ -3,7 +3,7 @@
 	import { mobileNavOpen, setMobileNav, sidebarCollapsed, toggleSidebar } from '#lib/stores/ui';
 	import Logo from './Logo.svelte';
 
-	type SubItem = { label: string; href: string };
+	type SubItem = { label: string; href?: string };
 	type Item = { label: string; href?: string; badge?: string; anak?: SubItem[] };
 
 	const menu: Item[] = [
@@ -11,19 +11,12 @@
 		{ label: 'Member', href: '/member' },
 		{
 			label: 'Produk',
-			anak: [
-				{ label: 'Semua Produk', href: '/produk' },
-				{ label: 'Kategori', href: '/produk/kategori' },
-				{ label: 'Stok Opname', href: '/produk/stok' }
-			]
+			anak: [{ label: 'Semua Produk' }, { label: 'Kategori' }, { label: 'Stok Opname' }]
 		},
-		{ label: 'Pesanan', href: '/pesanan', badge: '12' },
+		{ label: 'Pesanan', badge: '12' },
 		{
 			label: 'Laporan',
-			anak: [
-				{ label: 'Penjualan', href: '/laporan/penjualan' },
-				{ label: 'Stok', href: '/laporan/stok' }
-			]
+			anak: [{ label: 'Penjualan' }, { label: 'Stok' }]
 		}
 	];
 
@@ -31,6 +24,23 @@
 	const path = $derived(page.url.pathname);
 
 	let submenu = $state<string | null>(null);
+
+	$effect(() => {
+		if (!$mobileNavOpen) return;
+
+		const tutupEsc = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setMobileNav(false);
+		};
+		const overflowAwal = document.body.style.overflow;
+
+		document.addEventListener('keydown', tutupEsc);
+		document.body.style.overflow = 'hidden';
+
+		return () => {
+			document.removeEventListener('keydown', tutupEsc);
+			document.body.style.overflow = overflowAwal;
+		};
+	});
 
 	function aktif(href?: string): boolean {
 		if (!href) return false;
@@ -49,9 +59,9 @@
 		}
 	}
 
-	const dasar =
-		'flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] font-medium text-white/85 hover:bg-white/10';
+	const dasar = 'flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] font-medium';
 	const aktifKelas = 'bg-cream text-primary hover:bg-cream';
+	const biasaKelas = 'text-white/85 hover:bg-white/10';
 </script>
 
 {#snippet ikon(nama: string)}
@@ -97,11 +107,13 @@
 <aside
 	class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-y-auto bg-primary px-3 py-4 text-white transition-transform duration-200 {$mobileNavOpen
 		? 'translate-x-0'
-		: '-translate-x-full'} md:translate-x-0 {ciut ? 'md:w-[72px]' : 'md:w-64'}"
+		: '-translate-x-full max-md:invisible'} md:visible md:translate-x-0 {ciut
+		? 'md:w-[72px]'
+		: 'md:w-64'}"
 >
-	<div class="mb-6 flex items-center gap-2 {ciut ? 'flex-col' : 'justify-between'}">
+	<div class="mb-6 flex items-center gap-2 {ciut ? 'md:flex-col' : 'justify-between'}">
 		{#if ciut}
-			<span class="flex h-9 w-9 items-center justify-center rounded-lg bg-cream" aria-hidden="true">
+			<span class="hidden h-9 w-9 items-center justify-center rounded-lg bg-cream md:flex" aria-hidden="true">
 				<svg viewBox="0 0 24 24" width="18" height="18">
 					<path fill="#014BAA" d="M6.5 7.5h11l1.2 12.5H5.3L6.5 7.5z" />
 					<path
@@ -113,7 +125,9 @@
 					/>
 				</svg>
 			</span>
-		{:else}
+		{/if}
+
+		{#if !ciut}
 			<a href="/" onclick={() => setMobileNav(false)} aria-label="TokoKu — Dashboard">
 				<Logo onDark />
 			</a>
@@ -121,7 +135,7 @@
 
 		<button
 			type="button"
-			class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/35 text-xs leading-none"
+			class="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/35 text-xs leading-none md:flex"
 			aria-label={ciut ? 'Lebarkan menu' : 'Ciutkan menu'}
 			onclick={toggleSidebar}
 		>
@@ -134,7 +148,7 @@
 			{#if item.anak}
 				<button
 					type="button"
-					class="{dasar} {aktifAnak(item) ? aktifKelas : ''}"
+					class="{dasar} {aktifAnak(item) ? aktifKelas : biasaKelas}"
 					aria-expanded={submenu === item.label}
 					onclick={() => buka(item)}
 				>
@@ -147,21 +161,31 @@
 
 				{#if !ciut && submenu === item.label}
 					<div class="ml-7 flex flex-col gap-0.5 border-l border-white/25 pl-2">
-						{#each item.anak as anak (anak.href)}
-							<a
-								href={anak.href}
-								class="rounded-md px-2 py-1.5 text-xs text-white/80 hover:bg-white/10"
-								onclick={() => setMobileNav(false)}
-							>
-								{anak.label}
-							</a>
+						{#each item.anak as anak (anak.label)}
+							{#if anak.href}
+								<a
+									href={anak.href}
+									class="rounded-md px-2 py-1.5 text-xs text-white/80 hover:bg-white/10"
+									onclick={() => setMobileNav(false)}
+								>
+									{anak.label}
+								</a>
+							{:else}
+								<button
+									type="button"
+									aria-disabled="true"
+									class="rounded-md px-2 py-1.5 text-left text-xs text-white/60"
+								>
+									{anak.label}
+								</button>
+							{/if}
 						{/each}
 					</div>
 				{/if}
-			{:else}
+			{:else if item.href}
 				<a
 					href={item.href}
-					class="{dasar} {aktif(item.href) ? aktifKelas : ''}"
+					class="{dasar} {aktif(item.href) ? aktifKelas : biasaKelas}"
 					aria-current={aktif(item.href) ? 'page' : undefined}
 					onclick={() => setMobileNav(false)}
 				>
@@ -175,6 +199,23 @@
 						</span>
 					{/if}
 				</a>
+			{:else}
+				<button
+					type="button"
+					aria-disabled="true"
+					class="{dasar} {biasaKelas}"
+					onclick={() => buka(item)}
+				>
+					{@render ikon(item.label)}
+					{#if !ciut}
+						<span class="flex-1 text-left">{item.label}</span>
+					{/if}
+					{#if item.badge && !ciut}
+						<span class="rounded-full bg-cream px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+							{item.badge}
+						</span>
+					{/if}
+				</button>
 			{/if}
 		{/each}
 	</nav>

@@ -1,11 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 
 const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));
 vi.mock('$app/navigation', () => ({ goto }));
 
-import { auth, logout } from '#lib/stores/auth';
+import { auth, login, logout } from '#lib/stores/auth';
 import LoginPage from './+page.svelte';
 
 describe('halaman login', () => {
@@ -53,5 +53,12 @@ describe('halaman login', () => {
 
 		expect(get(auth)).toBe(true);
 		expect(goto).toHaveBeenCalledWith('/');
+	});
+
+	it('pengguna yang sudah login langsung diarahkan ke dashboard', async () => {
+		login('rina@tokoku.id', 'rahasia');
+		render(LoginPage);
+
+		await waitFor(() => expect(goto).toHaveBeenCalledWith('/'));
 	});
 });

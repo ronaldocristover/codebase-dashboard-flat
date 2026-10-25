@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { isoDaysAgo } from '../utils/format';
 import { members } from './members';
-
-const HARI = 24 * 60 * 60 * 1000;
 
 describe('mock members', () => {
 	it('berisi 50 member dengan field lengkap', () => {
@@ -18,11 +17,12 @@ describe('mock members', () => {
 	});
 
 	it('tanggal bergabung berada dalam 90 hari terakhir dan tidak di masa depan', () => {
-		const sekarang = Date.now();
+		const hariIni = isoDaysAgo(0);
+		const sembilanPuluhHariLalu = isoDaysAgo(90);
+
 		for (const m of members) {
-			const waktu = new Date(`${m.bergabung}T12:00:00`).getTime();
-			expect(sekarang - waktu).toBeGreaterThanOrEqual(0);
-			expect(sekarang - waktu).toBeLessThanOrEqual(90 * HARI);
+			expect(m.bergabung <= hariIni).toBe(true);
+			expect(m.bergabung >= sembilanPuluhHariLalu).toBe(true);
 		}
 	});
 

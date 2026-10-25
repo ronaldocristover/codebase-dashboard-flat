@@ -42,6 +42,26 @@ describe('halaman member', () => {
 		expect(screen.getByText('Tidak ada member yang cocok')).toBeTruthy();
 	});
 
+	it('menampilkan empty state saat kombinasi filter tidak menghasilkan data', async () => {
+		render(MemberPage);
+
+		await fireEvent.input(screen.getByLabelText('Cari member'), {
+			target: { value: 'Siti Aminah' }
+		});
+		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });
+		await fireEvent.change(screen.getByLabelText('Bergabung'), { target: { value: '7' } });
+
+		expect(screen.getByText('Tidak ada member yang cocok')).toBeTruthy();
+		expect(screen.getByText('Reset filter')).toBeTruthy();
+	});
+
+	it('memfilter berdasarkan rentang bergabung', async () => {
+		render(MemberPage);
+		await fireEvent.change(screen.getByLabelText('Bergabung'), { target: { value: '7' } });
+
+		expect(screen.getByText(/Menampilkan 1–\d+ dari \d+ member/)).toBeTruthy();
+	});
+
 	it('memfilter berdasarkan status', async () => {
 		const { container } = render(MemberPage);
 		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });

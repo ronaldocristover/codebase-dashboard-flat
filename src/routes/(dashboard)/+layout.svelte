@@ -14,7 +14,13 @@
 	<Sidebar />
 
 	<div class="flex min-h-screen flex-col {$sidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-64'}">
-		<TopNav {judul} onToggleMenu={() => setMobileNav(true)} />
+		<TopNav
+			{judul}
+			onToggleMenu={() => {
+				sidebarCollapsed.set(false);
+				setMobileNav(true);
+			}}
+		/>
 		<main class="flex-1 p-4 md:p-6">
 			{@render children()}
 		</main>
