@@ -1,56 +1,56 @@
-# sv
+# TokoKu Dashboard
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Dashboard admin toko online fiktif dengan desain flat. Dibangun dengan SvelteKit 3,
+Svelte 5 (runes), TypeScript, dan Tailwind CSS v4. Semua data mock — tanpa backend,
+tanpa API.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+## Menjalankan
 
 ```sh
-# recreate this project
-npx sv@1.1.1 create --template minimal --types ts --install npm app-tmp
-```
-
-## Adding features
-
-Add features to your project with `sv add`:
-
-```sh
-npx sv add
-```
-
-For example, to add Tailwind CSS:
-
-```sh
-npx sv add tailwindcss
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Buka `http://localhost:5173`. Login menerima email valid apa pun dengan kata sandi
+non-kosong (mis. `rina@tokoku.id` / `rahasia`). Sesi disimpan di memori, jadi refresh
+berarti logout.
 
-To create a production version of your app:
+## Perintah
 
 ```sh
-npm run build
+npm test          # seluruh test
+npm run test:unit # vitest watch
+npm run check     # svelte-check
+npm run build     # build produksi
+npm run preview   # preview hasil build
 ```
 
-You can preview the production build with `npm run preview`.
+## Isi
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- `/login` — form masuk dengan panel branding
+- `/` — stat card, tren penjualan, pesanan 7 hari, pesanan terbaru
+- `/member` — tabel member dengan pencarian, filter status/tanggal, sort, paginasi
+- Sidebar responsif (drawer di mobile), dropdown avatar dengan logout
+
+## Struktur
+
+```
+src/lib/components/   komponen UI + test colocated
+src/lib/mock/         data contoh
+src/lib/stores/       auth dan state UI (in-memory)
+src/lib/utils/        format, filter, sort, paginasi (fungsi murni)
+src/routes/           halaman, shell dashboard, guard
+```
+
+## Dokumentasi
+
+- [Konteks proyek](docs/CONTEXT.md)
+- [System design](docs/SYSTEM-DESIGN.md)
+- [Best practices Svelte 5 & SvelteKit 3](docs/svelte-best-practices.md)
+- [Aturan agent](AGENTS.md)
+
+## Batasan
+
+Demo UI, bukan produk produksi. Auth hanya simulasi di memori dan guard berjalan di
+klien. Menu Produk, Pesanan, dan Laporan belum punya halaman. Belum ada adapter
+deploy.

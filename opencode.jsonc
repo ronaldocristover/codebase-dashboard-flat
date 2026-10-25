@@ -1,0 +1,13 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"instructions": ["docs/svelte-best-practices.md"],
+	"mcp": {
+		"servers": {
+			"svelte": {
+				"type": "local",
+				"command": ["npx", "-y", "@sveltejs/mcp"],
+				"enabled": true
+			}
+		}
+	}
+}
