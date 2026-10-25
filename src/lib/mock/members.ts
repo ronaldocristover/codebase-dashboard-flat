@@ -50,8 +50,8 @@ const BELAKANG = [
 const NONAKTIF = new Set([2, 7, 13, 19, 26, 31, 38, 44, 47]);
 
 export const members: Member[] = Array.from({ length: 50 }, (_, i) => {
-	const depan = DEPAN[i % DEPAN.length];
-	const belakang = BELAKANG[(i * 7) % BELAKANG.length];
+	const depan = DEPAN[(i + Math.floor(i / 20) * 3) % DEPAN.length];
+	const belakang = BELAKANG[i % BELAKANG.length];
 	const nama = `${depan} ${belakang}`;
 	const email = `${depan.toLowerCase()}.${belakang.toLowerCase()}${i}@mail.com`;
 	const hp = `08${String(11 + (i % 80)).slice(0, 2)}-${String(1000 + i * 37).slice(0, 4)}-${String(
