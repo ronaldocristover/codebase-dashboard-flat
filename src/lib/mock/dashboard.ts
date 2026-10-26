@@ -3,14 +3,14 @@ import { formatTanggalSingkat, isoDaysAgo } from '../utils/format';
 
 export const stats: DashboardStat[] = [
 	{
-		label: 'Penjualan hari ini',
-		nilai: 'Rp 4,8 jt',
-		delta: '▲ 12% dari kemarin',
+		label: 'Sales today',
+		nilai: 'Rp 4.8M',
+		delta: '▲ 12% from yesterday',
 		arah: 'naik'
 	},
-	{ label: 'Pesanan baru', nilai: '132', delta: '▲ 8% dari kemarin', arah: 'naik' },
-	{ label: 'Produk aktif', nilai: '248', delta: '▼ 3 stok habis', arah: 'turun' },
-	{ label: 'Total member', nilai: '1.204', delta: '▲ 24 member baru', arah: 'naik' }
+	{ label: 'New orders', nilai: '132', delta: '▲ 8% from yesterday', arah: 'naik' },
+	{ label: 'Active products', nilai: '248', delta: '▼ 3 out of stock', arah: 'turun' },
+	{ label: 'Total members', nilai: '1.204', delta: '▲ 24 new members', arah: 'naik' }
 ];
 
 const POLA_PENJUALAN = [
@@ -27,13 +27,13 @@ export const salesTrend: SalesPoint[] = POLA_PENJUALAN.map((rasio, i) => {
 });
 
 export const ordersWeek: DayCount[] = [
-	{ hari: 'Sen', jumlah: 86 },
-	{ hari: 'Sel', jumlah: 104 },
-	{ hari: 'Rab', jumlah: 92 },
-	{ hari: 'Kam', jumlah: 118 },
-	{ hari: 'Jum', jumlah: 98 },
-	{ hari: 'Sab', jumlah: 132 },
-	{ hari: 'Min', jumlah: 112 }
+	{ hari: 'Mon', jumlah: 86 },
+	{ hari: 'Tue', jumlah: 104 },
+	{ hari: 'Wed', jumlah: 92 },
+	{ hari: 'Thu', jumlah: 118 },
+	{ hari: 'Fri', jumlah: 98 },
+	{ hari: 'Sat', jumlah: 132 },
+	{ hari: 'Sun', jumlah: 112 }
 ];
 
 export const recentOrders: OrderSummary[] = [

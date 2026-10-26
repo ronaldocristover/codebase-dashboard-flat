@@ -14,15 +14,15 @@ afterEach(() => {
 });
 
 describe('Sidebar', () => {
-	it('menampilkan logo dan menu utama', () => {
+	it('shows the logo and main menu', () => {
 		render(Sidebar);
 		expect(screen.getByText('TokoKu')).toBeTruthy();
 		expect(screen.getByText('Dashboard')).toBeTruthy();
-		expect(screen.getByText('Member')).toBeTruthy();
-		expect(screen.queryByText('Keluar')).toBeNull();
+		expect(screen.getByText('Members')).toBeTruthy();
+		expect(screen.queryByText('Sign out')).toBeNull();
 	});
 
-	it('menu aktif berwarna royal blue di atas latar cream', () => {
+	it('the active item is primary on a cream background', () => {
 		render(Sidebar);
 		const dashboard = screen.getByRole('link', { name: 'Dashboard' });
 
@@ -31,63 +31,63 @@ describe('Sidebar', () => {
 		expect(dashboard.className).not.toContain('text-white/85');
 	});
 
-	it('menu tanpa halaman tidak menjadi tautan mati', () => {
+	it('items without a page are not dead links', () => {
 		render(Sidebar);
 
-		expect(screen.queryByRole('link', { name: /Pesanan/ })).toBeNull();
-		expect(screen.getByRole('button', { name: /Pesanan/ })).toBeTruthy();
-		expect(screen.queryByRole('link', { name: /Laporan/ })).toBeNull();
-		expect(screen.getByRole('button', { name: /Laporan/ })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: /Orders/ })).toBeNull();
+		expect(screen.getByRole('button', { name: /Orders/ })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: /Reports/ })).toBeNull();
+		expect(screen.getByRole('button', { name: /Reports/ })).toBeTruthy();
 		expect(document.querySelector('a[href="/pesanan"]')).toBeNull();
 		expect(document.querySelector('a[href="/produk"]')).toBeNull();
 		expect(document.querySelector('a[href="/laporan"]')).toBeNull();
 	});
 
-	it('membuka submenu Produk dan menutupnya saat Laporan diklik', async () => {
+	it('opens the Products submenu and closes it when Reports is clicked', async () => {
 		render(Sidebar);
 
-		expect(screen.queryByText('Semua Produk')).toBeNull();
-		await fireEvent.click(screen.getByRole('button', { name: /Produk/ }));
-		expect(screen.getByText('Semua Produk')).toBeTruthy();
+		expect(screen.queryByText('All Products')).toBeNull();
+		await fireEvent.click(screen.getByRole('button', { name: /Products/ }));
+		expect(screen.getByText('All Products')).toBeTruthy();
 
-		await fireEvent.click(screen.getByRole('button', { name: /Laporan/ }));
-		expect(screen.queryByText('Semua Produk')).toBeNull();
-		expect(screen.queryByText('Penjualan')).toBeNull();
-		expect(screen.queryByText('Stok')).toBeNull();
+		await fireEvent.click(screen.getByRole('button', { name: /Reports/ }));
+		expect(screen.queryByText('All Products')).toBeNull();
+		expect(screen.queryByText('Sales')).toBeNull();
+		expect(screen.queryByText('Stock')).toBeNull();
 	});
 
-	it('submenu Produk menutup saat tombolnya diklik lagi', async () => {
+	it('the Products submenu closes when its button is clicked again', async () => {
 		render(Sidebar);
-		const tombol = () => screen.getByRole('button', { name: /^Produk/ });
+		const tombol = () => screen.getByRole('button', { name: /^Products/ });
 
 		await fireEvent.click(tombol());
-		expect(screen.getByText('Semua Produk')).toBeTruthy();
+		expect(screen.getByText('All Products')).toBeTruthy();
 
 		await fireEvent.click(tombol());
-		expect(screen.queryByText('Semua Produk')).toBeNull();
+		expect(screen.queryByText('All Products')).toBeNull();
 	});
 
-	it('menyembunyikan label dan submenu saat sidebar diciutkan', async () => {
+	it('hides labels and submenus when the sidebar is collapsed', async () => {
 		render(Sidebar);
-		await fireEvent.click(screen.getByRole('button', { name: /Produk/ }));
-		expect(screen.getByText('Semua Produk')).toBeTruthy();
+		await fireEvent.click(screen.getByRole('button', { name: /Products/ }));
+		expect(screen.getByText('All Products')).toBeTruthy();
 
-		await fireEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Collapse menu' }));
 
-		expect(screen.queryByText('Member')).toBeNull();
-		expect(screen.queryByText('Semua Produk')).toBeNull();
+		expect(screen.queryByText('Members')).toBeNull();
+		expect(screen.queryByText('All Products')).toBeNull();
 	});
 
-	it('status ciut bertahan saat komponen dipasang ulang', async () => {
+	it('the collapsed state persists across remounts', async () => {
 		render(Sidebar);
-		await fireEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Collapse menu' }));
 		cleanup();
 
 		render(Sidebar);
-		expect(screen.queryByText('Member')).toBeNull();
+		expect(screen.queryByText('Members')).toBeNull();
 	});
 
-	it('drawer tertutup tidak bisa difokus dan tertutup dengan Escape', async () => {
+	it('the closed drawer cannot be focused and closes with Escape', async () => {
 		render(Sidebar);
 		const drawer = screen.getByRole('complementary');
 		expect(drawer.className).toContain('max-md:invisible');
@@ -98,8 +98,8 @@ describe('Sidebar', () => {
 		expect(get(mobileNavOpen)).toBe(false);
 	});
 
-	it('tombol ciutkan hanya untuk desktop', () => {
+	it('the collapse button is desktop only', () => {
 		render(Sidebar);
-		expect(screen.getByRole('button', { name: 'Ciutkan menu' }).className).toContain('hidden');
+		expect(screen.getByRole('button', { name: 'Collapse menu' }).className).toContain('hidden');
 	});
 });

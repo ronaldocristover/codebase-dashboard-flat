@@ -4,11 +4,11 @@
 	let { status }: { status: MemberStatus | OrderStatus } = $props();
 
 	const peta: Record<MemberStatus | OrderStatus, { label: string; kelas: string }> = {
-		aktif: { label: 'Aktif', kelas: 'bg-success-bg text-success border-success-line' },
-		nonaktif: { label: 'Nonaktif', kelas: 'bg-warning-bg text-warning border-warning-line' },
-		lunas: { label: 'Lunas', kelas: 'bg-success-bg text-success border-success-line' },
-		dikirim: { label: 'Dikirim', kelas: 'bg-info-bg text-info border-info-line' },
-		menunggu: { label: 'Menunggu', kelas: 'bg-warning-bg text-warning border-warning-line' }
+		aktif: { label: 'Active', kelas: 'bg-success-bg text-success border-success-line' },
+		nonaktif: { label: 'Inactive', kelas: 'bg-warning-bg text-warning border-warning-line' },
+		lunas: { label: 'Paid', kelas: 'bg-success-bg text-success border-success-line' },
+		dikirim: { label: 'Shipped', kelas: 'bg-info-bg text-info border-info-line' },
+		menunggu: { label: 'Pending', kelas: 'bg-warning-bg text-warning border-warning-line' }
 	};
 
 	const info = $derived(peta[status]);

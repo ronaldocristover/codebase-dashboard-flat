@@ -2,21 +2,21 @@ import { render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 import DashboardPage from './+page.svelte';
 
-describe('halaman dashboard', () => {
-	it('menampilkan empat kartu statistik', () => {
+describe('dashboard page', () => {
+	it('shows four stat cards', () => {
 		render(DashboardPage);
 
-		expect(screen.getByText('Penjualan hari ini')).toBeTruthy();
-		expect(screen.getByText('Pesanan baru')).toBeTruthy();
-		expect(screen.getByText('Produk aktif')).toBeTruthy();
-		expect(screen.getByText('Total member')).toBeTruthy();
+		expect(screen.getByText('Sales today')).toBeTruthy();
+		expect(screen.getByText('New orders')).toBeTruthy();
+		expect(screen.getByText('Active products')).toBeTruthy();
+		expect(screen.getByText('Total members')).toBeTruthy();
 	});
 
-	it('menampilkan kedua chart dan tabel pesanan terbaru', () => {
+	it('shows both charts and the recent orders table', () => {
 		const { container } = render(DashboardPage);
 
-		expect(screen.getByText('Tren penjualan 30 hari')).toBeTruthy();
-		expect(screen.getByText('Pesanan 7 hari')).toBeTruthy();
+		expect(screen.getByText('Sales trend (30 days)')).toBeTruthy();
+		expect(screen.getByText('Orders (7 days)')).toBeTruthy();
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(5);
 		expect(screen.getByText('#INV-2041')).toBeTruthy();
 	});

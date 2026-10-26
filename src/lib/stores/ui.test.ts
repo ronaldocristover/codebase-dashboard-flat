@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { mobileNavOpen, setMobileNav, sidebarCollapsed, toggleSidebar } from './ui';
 
 describe('ui store', () => {
-	it('toggleSidebar membalik status ciut', () => {
+	it('toggleSidebar flips the collapsed state', () => {
 		const awal = get(sidebarCollapsed);
 		toggleSidebar();
 		expect(get(sidebarCollapsed)).toBe(!awal);
@@ -11,7 +11,7 @@ describe('ui store', () => {
 		expect(get(sidebarCollapsed)).toBe(awal);
 	});
 
-	it('setMobileNav mengatur drawer mobile', () => {
+	it('setMobileNav controls the mobile drawer', () => {
 		setMobileNav(true);
 		expect(get(mobileNavOpen)).toBe(true);
 		setMobileNav(false);

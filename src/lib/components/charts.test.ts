@@ -7,27 +7,27 @@ import StatCard from './StatCard.svelte';
 import StatusPill from './StatusPill.svelte';
 
 describe('StatCard', () => {
-	it('menampilkan label, nilai, dan delta naik', () => {
+	it('shows the label, value, and rising delta', () => {
 		render(StatCard, {
-			props: { label: 'Penjualan hari ini', nilai: 'Rp 4,8 jt', delta: '▲ 12%', arah: 'naik' }
+			props: { label: 'Sales today', nilai: 'Rp 4.8M', delta: '▲ 12%', arah: 'naik' }
 		});
 
-		expect(screen.getByText('Penjualan hari ini')).toBeTruthy();
-		expect(screen.getByText('Rp 4,8 jt')).toBeTruthy();
+		expect(screen.getByText('Sales today')).toBeTruthy();
+		expect(screen.getByText('Rp 4.8M')).toBeTruthy();
 		expect(screen.getByText('▲ 12%').className).toContain('text-success');
 	});
 
-	it('menandai delta turun dengan warna bahaya', () => {
+	it('marks a falling delta with the danger color', () => {
 		render(StatCard, {
-			props: { label: 'Produk aktif', nilai: '248', delta: '▼ 3 stok habis', arah: 'turun' }
+			props: { label: 'Active products', nilai: '248', delta: '▼ 3 out of stock', arah: 'turun' }
 		});
 
-		expect(screen.getByText('▼ 3 stok habis').className).toContain('text-danger');
+		expect(screen.getByText('▼ 3 out of stock').className).toContain('text-danger');
 	});
 });
 
 describe('LineChart', () => {
-	it('menggambar satu titik per data dan label sumbu x', () => {
+	it('draws one point per data item plus x-axis labels', () => {
 		const { container } = render(LineChart, { props: { points: salesTrend } });
 
 		const garis = container.querySelector('polyline');
@@ -37,7 +37,7 @@ describe('LineChart', () => {
 		expect(screen.getByText(salesTrend[0].label)).toBeTruthy();
 	});
 
-	it('menampilkan label sumbu x merata maksimal 5', () => {
+	it('shows at most 5 evenly spaced x-axis labels', () => {
 		render(LineChart, { props: { points: salesTrend } });
 		const labelUnik = new Set(salesTrend.map((p) => p.label));
 		expect(labelUnik.size).toBeGreaterThan(0);
@@ -46,24 +46,24 @@ describe('LineChart', () => {
 });
 
 describe('BarChart', () => {
-	it('menggambar satu batang per hari', () => {
+	it('draws one bar per day', () => {
 		const { container } = render(BarChart, { props: { data: ordersWeek } });
 
 		expect(container.querySelectorAll('rect')).toHaveLength(ordersWeek.length);
-		expect(screen.getByText('Sen')).toBeTruthy();
-		expect(screen.getByText('Min')).toBeTruthy();
+		expect(screen.getByText('Mon')).toBeTruthy();
+		expect(screen.getByText('Sun')).toBeTruthy();
 	});
 });
 
 describe('StatusPill', () => {
-	it('menampilkan label status yang ramah dibaca', () => {
+	it('shows a readable status label', () => {
 		const { rerender } = render(StatusPill, { props: { status: 'menunggu' } });
-		expect(screen.getByText('Menunggu')).toBeTruthy();
+		expect(screen.getByText('Pending')).toBeTruthy();
 
 		rerender({ status: 'lunas' });
-		expect(screen.getByText('Lunas')).toBeTruthy();
+		expect(screen.getByText('Paid')).toBeTruthy();
 
 		rerender({ status: 'nonaktif' });
-		expect(screen.getByText('Nonaktif')).toBeTruthy();
+		expect(screen.getByText('Inactive')).toBeTruthy();
 	});
 });

@@ -22,13 +22,13 @@
 		errorPassword = '';
 
 		if (email.trim() === '') {
-			errorEmail = 'Email wajib diisi';
+			errorEmail = 'Email is required';
 		} else if (!POLA_EMAIL.test(email.trim())) {
-			errorEmail = 'Format email tidak valid';
+			errorEmail = 'Enter a valid email';
 		}
 
 		if (password.trim() === '') {
-			errorPassword = 'Kata sandi wajib diisi';
+			errorPassword = 'Password is required';
 		}
 
 		if (errorEmail || errorPassword) return;
@@ -43,7 +43,7 @@
 </script>
 
 <svelte:head>
-	<title>Masuk — TokoKu</title>
+	<title>Sign in — TokoKu</title>
 </svelte:head>
 
 <div class="grid min-h-screen bg-cream md:grid-cols-2">
@@ -52,10 +52,10 @@
 
 		<div class="max-w-sm">
 			<h1 class="text-xl font-semibold leading-snug md:text-2xl">
-				Kelola tokomu dalam satu dashboard
+				Manage your store in one dashboard
 			</h1>
 			<p class="mt-2 text-sm text-white/80">
-				Pantau penjualan, pesanan, dan member dari mana saja.
+				Track sales, orders, and members from anywhere.
 			</p>
 		</div>
 
@@ -64,8 +64,8 @@
 
 	<div class="flex items-center justify-center p-6 md:p-10">
 		<form class="w-full max-w-sm" onsubmit={kirim} novalidate>
-			<h2 class="text-xl font-semibold text-primary">Masuk</h2>
-			<p class="mb-5 mt-1 text-xs text-muted">Gunakan akun admin toko kamu</p>
+			<h2 class="text-xl font-semibold text-primary">Sign in</h2>
+			<p class="mb-5 mt-1 text-xs text-muted">Enter your store admin account</p>
 
 			<label for="email" class="mb-1 block text-xs font-medium text-ink">Email</label>
 			<input
@@ -74,7 +74,7 @@
 				type="email"
 				bind:value={email}
 				class={kolom}
-				placeholder="nama@tokoku.id"
+				placeholder="name@tokoku.id"
 				autocomplete="email"
 				aria-invalid={errorEmail ? true : undefined}
 				aria-describedby={errorEmail ? 'email-error' : undefined}
@@ -84,7 +84,7 @@
 			{/if}
 
 			<label for="password" class="mb-1 mt-4 block text-xs font-medium text-ink">
-				Kata sandi
+				Password
 			</label>
 			<input
 				id="password"
@@ -106,21 +106,21 @@
 			<div class="mt-3 flex items-center justify-between text-xs text-ink">
 				<label class="flex items-center gap-2">
 					<input type="checkbox" class="h-3.5 w-3.5 accent-primary" />
-					Ingat saya
+					Remember me
 				</label>
-				<button type="button" aria-disabled="true" class="font-medium text-primary">Lupa sandi?</button>
+				<button type="button" aria-disabled="true" class="font-medium text-primary">Forgot password?</button>
 			</div>
 
 			<button
 				type="submit"
 				class="mt-5 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90"
 			>
-				Masuk ke Dashboard
+				Sign in to Dashboard
 			</button>
 
 			<p class="mt-4 text-center text-xs text-muted">
-				Belum punya akun?
-				<button type="button" aria-disabled="true" class="font-medium text-primary">Daftar</button>
+				Don't have an account?
+				<button type="button" aria-disabled="true" class="font-medium text-primary">Sign up</button>
 			</p>
 		</form>
 	</div>

@@ -20,9 +20,9 @@
 
 	<section class="grid gap-3 lg:grid-cols-[1.35fr_1fr]">
 		<div class="rounded-lg border border-line bg-white p-4">
-			<h2 class="text-sm font-semibold">Tren penjualan 30 hari</h2>
+			<h2 class="text-sm font-semibold">Sales trend (30 days)</h2>
 			<p class="mt-0.5 text-[11px] text-muted">
-				Total Rp 118,6 jt · naik 14% dibanding bulan lalu
+				Total Rp 118.6M · up 14% vs last month
 			</p>
 			<div class="mt-3">
 				<LineChart points={salesTrend} />
@@ -30,8 +30,8 @@
 		</div>
 
 		<div class="rounded-lg border border-line bg-white p-4">
-			<h2 class="text-sm font-semibold">Pesanan 7 hari</h2>
-			<p class="mt-0.5 text-[11px] text-muted">Total 742 pesanan</p>
+			<h2 class="text-sm font-semibold">Orders (7 days)</h2>
+			<p class="mt-0.5 text-[11px] text-muted">742 total orders</p>
 			<div class="mt-3">
 				<BarChart data={ordersWeek} />
 			</div>
@@ -40,8 +40,8 @@
 
 	<section class="rounded-lg border border-line bg-white">
 		<div class="border-b border-line px-4 py-3">
-			<h2 class="text-sm font-semibold">Pesanan terbaru</h2>
-			<p class="mt-0.5 text-[11px] text-muted">Update beberapa menit lalu</p>
+			<h2 class="text-sm font-semibold">Recent orders</h2>
+			<p class="mt-0.5 text-[11px] text-muted">Updated a few minutes ago</p>
 		</div>
 
 		<div class="overflow-x-auto">
@@ -49,8 +49,8 @@
 				<thead>
 					<tr class="text-[10px] uppercase tracking-[0.08em] text-muted">
 						<th class="px-4 py-2 font-medium">Invoice</th>
-						<th class="px-4 py-2 font-medium">Nama</th>
-						<th class="px-4 py-2 font-medium">Nominal</th>
+						<th class="px-4 py-2 font-medium">Name</th>
+						<th class="px-4 py-2 font-medium">Amount</th>
 						<th class="px-4 py-2 font-medium">Status</th>
 					</tr>
 				</thead>

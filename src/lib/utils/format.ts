@@ -3,14 +3,14 @@ const BULAN = [
 	'Feb',
 	'Mar',
 	'Apr',
-	'Mei',
+	'May',
 	'Jun',
 	'Jul',
-	'Agu',
+	'Aug',
 	'Sep',
-	'Okt',
+	'Oct',
 	'Nov',
-	'Des'
+	'Dec'
 ];
 
 export function formatAngka(n: number): string {

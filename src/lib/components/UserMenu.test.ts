@@ -11,47 +11,47 @@ describe('UserMenu', () => {
 		goto.mockClear();
 	});
 
-	it('menu tersembunyi sebelum avatar diklik', () => {
+	it('the menu is hidden before the avatar is clicked', () => {
 		render(UserMenu);
-		expect(screen.queryByText('Keluar')).toBeNull();
+		expect(screen.queryByText('Sign out')).toBeNull();
 		expect(screen.queryByText('Rina Setiawan')).toBeNull();
 	});
 
-	it('menampilkan menu saat avatar diklik', async () => {
+	it('shows the menu when the avatar is clicked', async () => {
 		render(UserMenu);
 		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
 
 		expect(screen.getByText('Rina Setiawan')).toBeTruthy();
 		expect(screen.getByText('rina@tokoku.id')).toBeTruthy();
-		expect(screen.getByText('Profil Saya')).toBeTruthy();
-		expect(screen.getByText('Pengaturan Toko')).toBeTruthy();
-		expect(screen.getByText('Keluar')).toBeTruthy();
+		expect(screen.getByText('My Profile')).toBeTruthy();
+		expect(screen.getByText('Store Settings')).toBeTruthy();
+		expect(screen.getByText('Sign out')).toBeTruthy();
 	});
 
-	it('menutup menu saat klik di luar', async () => {
+	it('closes the menu on an outside click', async () => {
 		render(UserMenu);
 		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
-		expect(screen.getByText('Keluar')).toBeTruthy();
+		expect(screen.getByText('Sign out')).toBeTruthy();
 
 		await fireEvent.click(document.body);
-		expect(screen.queryByText('Keluar')).toBeNull();
+		expect(screen.queryByText('Sign out')).toBeNull();
 	});
 
-	it('menutup menu saat Escape', async () => {
+	it('closes the menu on Escape', async () => {
 		render(UserMenu);
 		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
-		expect(screen.getByText('Keluar')).toBeTruthy();
+		expect(screen.getByText('Sign out')).toBeTruthy();
 
 		await fireEvent.keyDown(document, { key: 'Escape' });
-		expect(screen.queryByText('Keluar')).toBeNull();
+		expect(screen.queryByText('Sign out')).toBeNull();
 	});
 
-	it('tombol Keluar mengarah ke halaman login', async () => {
+	it('sign out button goes to the login page', async () => {
 		render(UserMenu);
 		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
-		await fireEvent.click(screen.getByText('Keluar'));
+		await fireEvent.click(screen.getByText('Sign out'));
 
 		expect(goto).toHaveBeenCalledWith('/login');
-		expect(screen.queryByText('Keluar')).toBeNull();
+		expect(screen.queryByText('Sign out')).toBeNull();
 	});
 });

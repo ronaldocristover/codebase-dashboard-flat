@@ -33,7 +33,7 @@
 		class="h-full w-full"
 		preserveAspectRatio="none"
 		role="img"
-		aria-label="Tren penjualan"
+		aria-label="Sales trend"
 	>
 		{#each [14, 38, 62, 86] as y (y)}
 			<line x1="0" y1={y} x2={LEBAR} y2={y} class="stroke-line" stroke-width="1" />

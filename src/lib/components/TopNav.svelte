@@ -9,7 +9,7 @@
 	<button
 		type="button"
 		class="flex h-9 w-9 flex-col items-center justify-center gap-1 rounded-md border border-line-strong bg-white md:hidden"
-		aria-label="Buka menu"
+		aria-label="Open menu"
 		onclick={onToggleMenu}
 	>
 		<span class="h-0.5 w-4 rounded bg-primary"></span>

@@ -12,7 +12,7 @@
 	class="h-24 w-full"
 	preserveAspectRatio="none"
 	role="img"
-	aria-label="Pesanan 7 hari"
+	aria-label="Orders per day"
 >
 	{#each data as item, i (item.hari)}
 		{@const tinggi = (item.jumlah / max) * TINGGI_BATANG}

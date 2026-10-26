@@ -26,13 +26,13 @@
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-	<p class="text-[11px] text-muted">Menampilkan {from}–{to} dari {total} member</p>
+	<p class="text-[11px] text-muted">Showing {from}–{to} of {total} members</p>
 
 	<div class="flex items-center gap-1">
 		<button
 			type="button"
 			class={tombol}
-			aria-label="Halaman sebelumnya"
+			aria-label="Previous page"
 			disabled={page <= 1}
 			onclick={() => onPageChange(page - 1)}
 		>
@@ -43,7 +43,7 @@
 			<button
 				type="button"
 				class="{tombol} {nomorHalaman === page ? 'border-primary bg-primary text-white' : 'bg-white'}"
-				aria-label="Halaman {nomorHalaman}"
+				aria-label="Page {nomorHalaman}"
 				aria-current={nomorHalaman === page ? 'page' : undefined}
 				onclick={() => onPageChange(nomorHalaman)}
 			>
@@ -54,7 +54,7 @@
 		<button
 			type="button"
 			class={tombol}
-			aria-label="Halaman berikutnya"
+			aria-label="Next page"
 			disabled={page >= totalPages}
 			onclick={() => onPageChange(page + 1)}
 		>

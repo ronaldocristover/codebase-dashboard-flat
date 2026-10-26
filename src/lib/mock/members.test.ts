@@ -3,7 +3,7 @@ import { isoDaysAgo } from '../utils/format';
 import { members } from './members';
 
 describe('mock members', () => {
-	it('berisi 50 member dengan field lengkap', () => {
+	it('contains 50 members with complete fields', () => {
 		expect(members).toHaveLength(50);
 		for (const m of members) {
 			expect(m.id).toBeTruthy();
@@ -16,7 +16,7 @@ describe('mock members', () => {
 		}
 	});
 
-	it('tanggal bergabung berada dalam 90 hari terakhir dan tidak di masa depan', () => {
+	it('joined dates fall within the last 90 days and not in the future', () => {
 		const hariIni = isoDaysAgo(0);
 		const sembilanPuluhHariLalu = isoDaysAgo(90);
 
@@ -26,7 +26,7 @@ describe('mock members', () => {
 		}
 	});
 
-	it('punya minimal 3 member nonaktif', () => {
+	it('has at least 3 inactive members', () => {
 		expect(members.filter((m) => m.status === 'nonaktif').length).toBeGreaterThanOrEqual(3);
 	});
 });

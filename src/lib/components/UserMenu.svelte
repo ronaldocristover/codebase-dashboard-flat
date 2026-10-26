@@ -62,7 +62,7 @@
 				role="menuitem"
 			>
 				<span class="h-3 w-3 rounded-sm bg-line"></span>
-				Profil Saya
+				My Profile
 			</button>
 			<button
 				type="button"
@@ -70,7 +70,7 @@
 				role="menuitem"
 			>
 				<span class="h-3 w-3 rounded-sm bg-line"></span>
-				Pengaturan Toko
+				Store Settings
 			</button>
 			<button
 				type="button"
@@ -78,7 +78,7 @@
 				role="menuitem"
 			>
 				<span class="h-3 w-3 rounded-sm bg-line"></span>
-				Notifikasi
+				Notifications
 				<span class="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white">
 					3
 				</span>
@@ -93,7 +93,7 @@
 				onclick={keluar}
 			>
 				<span class="h-3 w-3 rounded-sm bg-danger/20"></span>
-				Keluar
+				Sign out
 			</button>
 		</div>
 	{/if}

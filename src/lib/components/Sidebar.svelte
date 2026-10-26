@@ -8,13 +8,13 @@
 
 	const menu: Item[] = [
 		{ label: 'Dashboard', href: '/' },
-		{ label: 'Member', href: '/member' },
+		{ label: 'Members', href: '/member' },
 		{
-			label: 'Produk',
-			anak: [{ label: 'Semua Produk' }, { label: 'Kategori' }, { label: 'Stok Opname' }]
+			label: 'Products',
+			anak: [{ label: 'All Products' }, { label: 'Categories' }, { label: 'Stocktake' }]
 		},
-		{ label: 'Pesanan', badge: '12' },
-		{ label: 'Laporan' }
+		{ label: 'Orders', badge: '12' },
+		{ label: 'Reports' }
 	];
 
 	const ciut = $derived($sidebarCollapsed);
@@ -78,13 +78,13 @@
 			<rect x="14" y="3" width="7" height="7" rx="1" />
 			<rect x="3" y="14" width="7" height="7" rx="1" />
 			<rect x="14" y="14" width="7" height="7" rx="1" />
-		{:else if nama === 'Member'}
+		{:else if nama === 'Members'}
 			<circle cx="12" cy="8" r="3.5" />
 			<path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
-		{:else if nama === 'Produk'}
+		{:else if nama === 'Products'}
 			<path d="M3 8l9-5 9 5-9 5-9-5z" />
 			<path d="M3 8v9l9 5 9-5V8" />
-		{:else if nama === 'Pesanan'}
+		{:else if nama === 'Orders'}
 			<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z" />
 			<path d="M9 8h6M9 12h6" />
 		{:else}
@@ -97,7 +97,7 @@
 	<button
 		type="button"
 		class="fixed inset-0 z-30 bg-ink/40 md:hidden"
-		aria-label="Tutup menu"
+		aria-label="Close menu"
 		onclick={() => setMobileNav(false)}
 	></button>
 {/if}
@@ -134,7 +134,7 @@
 		<button
 			type="button"
 			class="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/35 text-xs leading-none md:flex"
-			aria-label={ciut ? 'Lebarkan menu' : 'Ciutkan menu'}
+			aria-label={ciut ? 'Expand menu' : 'Collapse menu'}
 			onclick={toggleSidebar}
 		>
 			{ciut ? '»' : '«'}

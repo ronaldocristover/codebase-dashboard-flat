@@ -11,29 +11,29 @@ function siapkan(page = 1) {
 }
 
 describe('Pagination', () => {
-	it('menampilkan ringkasan jumlah data', () => {
+	it('shows the row count summary', () => {
 		siapkan(1);
-		expect(screen.getByText('Menampilkan 1–10 dari 50 member')).toBeTruthy();
+		expect(screen.getByText('Showing 1–10 of 50 members')).toBeTruthy();
 	});
 
-	it('menonaktifkan tombol sebelumnya di halaman pertama', () => {
+	it('disables the previous button on the first page', () => {
 		siapkan(1);
 		expect(
-			(screen.getByRole('button', { name: 'Halaman sebelumnya' }) as HTMLButtonElement).disabled
+			(screen.getByRole('button', { name: 'Previous page' }) as HTMLButtonElement).disabled
 		).toBe(true);
 	});
 
-	it('memanggil onPageChange saat nomor halaman diklik', async () => {
+	it('calls onPageChange when a page number is clicked', async () => {
 		const onPageChange = siapkan(1);
-		await fireEvent.click(screen.getByRole('button', { name: 'Halaman 2' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Page 2' }));
 		expect(onPageChange).toHaveBeenCalledWith(2);
 	});
 
-	it('menampilkan maksimal 5 nomor halaman', () => {
+	it('shows at most 5 page numbers', () => {
 		render(Pagination, {
 			props: { page: 10, totalPages: 20, total: 200, from: 91, to: 100, onPageChange: () => {} }
 		});
-		const nomor = screen.getAllByRole('button', { name: /^Halaman \d+$/ });
+		const nomor = screen.getAllByRole('button', { name: /^Page \d+$/ });
 		expect(nomor.length).toBeLessThanOrEqual(5);
 	});
 });

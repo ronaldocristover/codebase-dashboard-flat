@@ -8,82 +8,82 @@ vi.mock('$app/navigation', () => ({ goto }));
 import { auth, login, logout } from '#lib/stores/auth';
 import LoginPage from './+page.svelte';
 
-describe('halaman login', () => {
+describe('login page', () => {
 	beforeEach(() => {
 		goto.mockClear();
 		logout();
 	});
 
-	it('menampilkan logo dan form', () => {
+	it('shows the logo and form', () => {
 		render(LoginPage);
 		expect(screen.getByText('TokoKu')).toBeTruthy();
 		expect(screen.getByLabelText('Email')).toBeTruthy();
-		expect(screen.getByLabelText('Kata sandi')).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Masuk ke Dashboard' })).toBeTruthy();
+		expect(screen.getByLabelText('Password')).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Sign in to Dashboard' })).toBeTruthy();
 	});
 
-	it('menolak submit kosong dengan pesan error', async () => {
+	it('rejects an empty submit with error messages', async () => {
 		render(LoginPage);
-		await fireEvent.click(screen.getByRole('button', { name: 'Masuk ke Dashboard' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
 
-		expect(screen.getByText('Email wajib diisi')).toBeTruthy();
-		expect(screen.getByText('Kata sandi wajib diisi')).toBeTruthy();
+		expect(screen.getByText('Email is required')).toBeTruthy();
+		expect(screen.getByText('Password is required')).toBeTruthy();
 		expect(goto).not.toHaveBeenCalled();
 	});
 
-	it('menghubungkan pesan error ke input', async () => {
+	it('links error messages to their inputs', async () => {
 		render(LoginPage);
-		await fireEvent.click(screen.getByRole('button', { name: 'Masuk ke Dashboard' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
 
-		const errorEmail = screen.getByText('Email wajib diisi');
-		const errorPassword = screen.getByText('Kata sandi wajib diisi');
+		const errorEmail = screen.getByText('Email is required');
+		const errorPassword = screen.getByText('Password is required');
 		expect(errorEmail.getAttribute('role')).toBe('alert');
 		expect(errorPassword.getAttribute('role')).toBe('alert');
 		expect(errorEmail.id).toBe('email-error');
 		expect(errorPassword.id).toBe('password-error');
 
 		const email = screen.getByLabelText('Email');
-		const password = screen.getByLabelText('Kata sandi');
+		const password = screen.getByLabelText('Password');
 		expect(email.getAttribute('aria-describedby')).toBe('email-error');
 		expect(password.getAttribute('aria-describedby')).toBe('password-error');
 		expect(email.getAttribute('aria-invalid')).toBe('true');
 		expect(password.getAttribute('aria-invalid')).toBe('true');
 	});
 
-	it('placeholder lupa sandi dan daftar adalah tombol, bukan tautan', () => {
+	it('the forgot password and sign up placeholders are buttons, not links', () => {
 		render(LoginPage);
 
-		expect(screen.getByRole('button', { name: 'Lupa sandi?' })).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Daftar' })).toBeTruthy();
-		expect(screen.queryByRole('link', { name: 'Lupa sandi?' })).toBeNull();
-		expect(screen.queryByRole('link', { name: 'Daftar' })).toBeNull();
+		expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Sign up' })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: 'Forgot password?' })).toBeNull();
+		expect(screen.queryByRole('link', { name: 'Sign up' })).toBeNull();
 	});
 
-	it('menolak format email salah', async () => {
+	it('rejects an invalid email format', async () => {
 		render(LoginPage);
 
 		await fireEvent.input(screen.getByLabelText('Email'), { target: { value: 'bukan-email' } });
-		await fireEvent.input(screen.getByLabelText('Kata sandi'), { target: { value: 'rahasia' } });
-		await fireEvent.click(screen.getByRole('button', { name: 'Masuk ke Dashboard' }));
+		await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'rahasia' } });
+		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
 
-		expect(screen.getByText('Format email tidak valid')).toBeTruthy();
+		expect(screen.getByText('Enter a valid email')).toBeTruthy();
 		expect(goto).not.toHaveBeenCalled();
 	});
 
-	it('login valid masuk ke dashboard', async () => {
+	it('a valid login enters the dashboard', async () => {
 		render(LoginPage);
 
 		await fireEvent.input(screen.getByLabelText('Email'), {
 			target: { value: 'rina@tokoku.id' }
 		});
-		await fireEvent.input(screen.getByLabelText('Kata sandi'), { target: { value: 'rahasia' } });
-		await fireEvent.click(screen.getByRole('button', { name: 'Masuk ke Dashboard' }));
+		await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'rahasia' } });
+		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
 
 		expect(get(auth)).toBe(true);
 		expect(goto).toHaveBeenCalledWith('/');
 	});
 
-	it('pengguna yang sudah login langsung diarahkan ke dashboard', async () => {
+	it('an already signed-in user is redirected to the dashboard', async () => {
 		login('rina@tokoku.id', 'rahasia');
 		render(LoginPage);
 

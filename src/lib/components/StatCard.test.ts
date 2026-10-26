@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import StatCard from './StatCard.svelte';
 
 describe('StatCard', () => {
-	it('menampilkan nilai dengan ukuran judul 28px', () => {
+	it('shows the value at a 28px heading size', () => {
 		render(StatCard, {
 			label: 'Penjualan hari ini',
 			nilai: 'Rp 4,8 jt',
