@@ -4,103 +4,136 @@ import { members } from '#lib/mock/members';
 import { formatRupiah } from '#lib/utils/format';
 import MemberPage from './+page.svelte';
 
-function baris(container: HTMLElement): string[][] {
+function rows(container: HTMLElement): string[][] {
 	return Array.from(container.querySelectorAll('tbody tr')).map((tr) =>
 		Array.from(tr.querySelectorAll('td')).map((td) => td.textContent?.trim() ?? '')
 	);
 }
 
-function totalMaksimum(): string {
+function maxSpend(): string {
 	return formatRupiah(Math.max(...members.map((m) => m.totalBelanja)));
 }
 
-describe('halaman member', () => {
-	it('menampilkan breadcrumb, judul, dan 10 baris pertama', () => {
-		const { container } = render(MemberPage);
+function renderPage() {
+	return render(MemberPage, { props: { data: { members } } });
+}
+
+describe('member page', () => {
+	it('shows the breadcrumb, title, and the first 10 rows', () => {
+		const { container } = renderPage();
 
 		expect(screen.getByText('Home')).toBeTruthy();
-		expect(screen.getByText('Member', { selector: 'span' })).toBeTruthy();
+		expect(screen.getByRole('heading', { name: 'Members' })).toBeTruthy();
+		expect(screen.getByText('50 members')).toBeTruthy();
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
-		expect(screen.getByText(/Menampilkan 1–10 dari 50 member/)).toBeTruthy();
-
-		const judul = screen.getByRole('heading', { name: 'Data Member' });
-		expect(judul.className).toContain('text-xl');
+		expect(screen.getByText(/Showing 1–10 of 50 members/)).toBeTruthy();
 	});
 
-	it('mencari member lewat kolom search', async () => {
-		const { container } = render(MemberPage);
-		await fireEvent.input(screen.getByLabelText('Cari member'), {
+	it('links the add button to the new member page', () => {
+		renderPage();
+
+		expect(screen.getByRole('link', { name: '+ Add Member' }).getAttribute('href')).toBe(
+			'/member/new'
+		);
+	});
+
+	it('searches members by name', async () => {
+		const { container } = renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), {
 			target: { value: 'Siti Aminah' }
 		});
 
-		const rows = baris(container);
-		expect(rows).toHaveLength(1);
-		expect(rows[0][0]).toContain('Siti Aminah');
+		const list = rows(container);
+		expect(list).toHaveLength(1);
+		expect(list[0][0]).toContain('Siti Aminah');
 	});
 
-	it('menampilkan empty state saat tidak ada yang cocok', async () => {
-		render(MemberPage);
-		await fireEvent.input(screen.getByLabelText('Cari member'), { target: { value: 'zzzz' } });
+	it('links the member name and the view/edit actions', async () => {
+		renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), {
+			target: { value: 'Siti Aminah' }
+		});
 
-		expect(screen.getByText('Tidak ada member yang cocok')).toBeTruthy();
+		const member = members.find((m) => m.nama === 'Siti Aminah');
+		expect(member).toBeTruthy();
+
+		expect(screen.getByRole('link', { name: 'Siti Aminah' }).getAttribute('href')).toBe(
+			`/member/${member!.id}`
+		);
+		expect(
+			screen.getByRole('link', { name: 'View Siti Aminah' }).getAttribute('href')
+		).toBe(`/member/${member!.id}`);
+		expect(
+			screen.getByRole('link', { name: 'Edit Siti Aminah' }).getAttribute('href')
+		).toBe(`/member/${member!.id}/edit`);
 	});
 
-	it('menampilkan empty state saat kombinasi filter tidak menghasilkan data', async () => {
-		render(MemberPage);
+	it('shows the empty state when nothing matches', async () => {
+		renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), {
+			target: { value: 'zzzz' }
+		});
 
-		await fireEvent.input(screen.getByLabelText('Cari member'), {
+		expect(screen.getByText('No matching members')).toBeTruthy();
+		expect(screen.getByText('Try changing the keyword or filters.')).toBeTruthy();
+	});
+
+	it('shows the empty state when filters leave no data', async () => {
+		renderPage();
+
+		await fireEvent.input(screen.getByLabelText('Search members'), {
 			target: { value: 'Siti Aminah' }
 		});
 		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });
-		await fireEvent.change(screen.getByLabelText('Bergabung'), { target: { value: '7' } });
+		await fireEvent.change(screen.getByLabelText('Joined'), { target: { value: '7' } });
 
-		expect(screen.getByText('Tidak ada member yang cocok')).toBeTruthy();
-		expect(screen.getByText('Reset filter')).toBeTruthy();
+		expect(screen.getByText('No matching members')).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Reset filters' })).toBeTruthy();
 	});
 
-	it('memfilter berdasarkan rentang bergabung', async () => {
-		render(MemberPage);
-		await fireEvent.change(screen.getByLabelText('Bergabung'), { target: { value: '7' } });
+	it('filters by joined range', async () => {
+		renderPage();
+		await fireEvent.change(screen.getByLabelText('Joined'), { target: { value: '7' } });
 
-		expect(screen.getByText(/Menampilkan 1–\d+ dari \d+ member/)).toBeTruthy();
+		expect(screen.getByText(/Showing 1–\d+ of \d+ members/)).toBeTruthy();
 	});
 
-	it('memfilter berdasarkan status', async () => {
-		const { container } = render(MemberPage);
+	it('filters by status', async () => {
+		const { container } = renderPage();
 		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });
 
-		const rows = baris(container);
-		expect(rows.length).toBeGreaterThan(0);
-		for (const row of rows) {
-			expect(row[row.length - 1]).toContain('Nonaktif');
+		const list = rows(container);
+		expect(list.length).toBeGreaterThan(0);
+		for (const row of list) {
+			expect(row[row.length - 2]).toContain('Inactive');
 		}
 	});
 
-	it('mengurutkan kolom total belanja naik lalu turun', async () => {
-		const { container } = render(MemberPage);
-		const header = screen.getByRole('button', { name: /Total Belanja/ });
+	it('sorts total spend ascending then descending', async () => {
+		const { container } = renderPage();
+		const header = screen.getByRole('button', { name: /Total Spend/ });
 
 		await fireEvent.click(header);
-		expect(baris(container)[0][4]).toBe('Rp 89.000');
+		expect(rows(container)[0][4]).toBe('Rp 89.000');
 
 		await fireEvent.click(header);
-		expect(baris(container)[0][4]).toBe(totalMaksimum());
+		expect(rows(container)[0][4]).toBe(maxSpend());
 	});
 
-	it('kembali ke halaman 1 saat filter berubah', async () => {
-		render(MemberPage);
-		await fireEvent.click(screen.getByRole('button', { name: 'Halaman 3' }));
-		expect(screen.getByText(/Menampilkan 21–30/)).toBeTruthy();
+	it('returns to page 1 when a filter changes', async () => {
+		renderPage();
+		await fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
+		expect(screen.getByText(/Showing 21–30/)).toBeTruthy();
 
-		await fireEvent.input(screen.getByLabelText('Cari member'), {
+		await fireEvent.input(screen.getByLabelText('Search members'), {
 			target: { value: 'Siti Aminah' }
 		});
-		expect(screen.getByText(/Menampilkan 1–1/)).toBeTruthy();
+		expect(screen.getByText(/Showing 1–1/)).toBeTruthy();
 	});
 
-	it('tombol reset mengembalikan seluruh data', async () => {
-		const { container } = render(MemberPage);
-		await fireEvent.input(screen.getByLabelText('Cari member'), { target: { value: 'zzzz' } });
+	it('resets all filters', async () => {
+		const { container } = renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), { target: { value: 'zzzz' } });
 		await fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
 
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);

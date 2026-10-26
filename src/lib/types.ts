@@ -26,6 +26,15 @@ export interface DayCount {
 
 export type OrderStatus = 'lunas' | 'dikirim' | 'menunggu';
 
+export interface MemberOrder {
+	invoice: string;
+	memberId: string;
+	amount: number;
+	status: OrderStatus;
+	/** ISO date, yyyy-mm-dd */
+	date: string;
+}
+
 export interface OrderSummary {
 	invoice: string;
 	nama: string;
