@@ -42,25 +42,26 @@
 	}
 
 	const field =
-		'w-full rounded-md border border-line-strong bg-white px-2.5 py-2 text-xs text-ink focus:outline-2 focus:outline-primary';
-	const label = 'mb-1 block text-[11px] font-medium text-ink';
-	const error = 'mt-1 text-[11px] text-danger';
+		'w-full rounded-md border border-line-strong bg-white px-3 py-2.5 text-sm text-ink focus:outline-2 focus:outline-primary';
+	const label = 'mb-1.5 block text-xs font-medium text-ink';
+	const error = 'mt-1.5 text-xs text-danger';
 </script>
 
-<form class="space-y-3" onsubmit={submit} novalidate>
+<form class="space-y-4" onsubmit={submit} novalidate>
 	{#if errors.form}
 		<p role="alert" class="rounded-md border border-danger px-3 py-2 text-xs text-danger">
 			{errors.form}
 		</p>
 	{/if}
 
-	<div class="grid gap-3 sm:grid-cols-2">
+	<div class="grid gap-4 sm:grid-cols-2">
 		<div>
 			<label for="member-nama" class={label}>Name</label>
 			<input
 				id="member-nama"
 				bind:value={nama}
 				class={field}
+				autocomplete="name"
 				aria-invalid={errors.nama ? 'true' : undefined}
 				aria-describedby={errors.nama ? 'member-nama-error' : undefined}
 			/>
@@ -76,6 +77,7 @@
 				type="email"
 				bind:value={email}
 				class={field}
+				autocomplete="email"
 				aria-invalid={errors.email ? 'true' : undefined}
 				aria-describedby={errors.email ? 'member-email-error' : undefined}
 			/>
@@ -91,6 +93,7 @@
 				type="tel"
 				bind:value={hp}
 				class={field}
+				autocomplete="tel"
 				aria-invalid={errors.hp ? 'true' : undefined}
 				aria-describedby={errors.hp ? 'member-hp-error' : undefined}
 			/>
@@ -117,19 +120,19 @@
 		</div>
 	</div>
 
-	<div class="flex flex-wrap items-center gap-2 pt-1">
-		<button
-			type="submit"
-			disabled={saving}
-			class="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
-		>
-			{saving ? 'Saving…' : member ? 'Save Changes' : 'Save Member'}
-		</button>
+	<div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
 		<a
 			href={member ? `/member/${member.id}` : '/member'}
-			class="rounded-md border border-line-strong px-3 py-2 text-xs font-medium text-ink hover:bg-cream"
+			class="rounded-md border border-line-strong px-4 py-2.5 text-sm font-medium text-ink hover:bg-cream"
 		>
 			Cancel
 		</a>
+		<button
+			type="submit"
+			disabled={saving}
+			class="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+		>
+			{saving ? 'Saving…' : member ? 'Save Changes' : 'Save Member'}
+		</button>
 	</div>
 </form>

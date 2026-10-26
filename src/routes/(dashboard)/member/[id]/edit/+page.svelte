@@ -40,11 +40,13 @@
 		]}
 	/>
 
-	<div class="rounded-lg border border-line bg-white p-4">
-		<h2 class="text-xl font-semibold text-primary">Edit Member</h2>
-		<p class="mt-0.5 text-[11px] text-muted">{data.member.nama}</p>
+	<div class="max-w-2xl rounded-lg border border-line bg-white">
+		<div class="border-b border-line px-5 py-4">
+			<h2 class="text-xl font-semibold text-primary">Edit Member</h2>
+			<p class="mt-1 text-xs text-muted">{data.member.nama}</p>
+		</div>
 
-		<div class="mt-4 max-w-2xl">
+		<div class="p-5">
 			{#key data.member.id}
 				<MemberForm member={data.member} onSubmit={updateMember} />
 			{/key}
