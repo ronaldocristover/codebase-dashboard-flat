@@ -22,7 +22,8 @@
 		return Array.from({ length: jumlah }, (_, i) => mulai + i);
 	});
 
-	const tombol = 'rounded-md border border-line-strong px-2.5 py-1 text-[11px] disabled:opacity-40';
+	const tombol =
+		'cursor-pointer rounded-md border border-line-strong px-2.5 py-1 text-[11px] disabled:cursor-not-allowed disabled:opacity-40';
 </script>
 
 <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
