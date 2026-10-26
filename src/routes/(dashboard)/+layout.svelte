@@ -7,7 +7,13 @@
 
 	let { children }: LayoutProps = $props();
 
-	const judul = $derived(page.url.pathname.startsWith('/member') ? 'Members' : 'Dashboard');
+	const judul = $derived(
+		page.url.pathname.startsWith('/member')
+			? 'Members'
+			: page.url.pathname.startsWith('/form-element')
+				? 'Form Element'
+				: 'Dashboard'
+	);
 </script>
 
 <div class="min-h-screen bg-cream">

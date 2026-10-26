@@ -31,6 +31,7 @@ Constraints that shape the design:
 | `/member/new` | `src/routes/(dashboard)/member/new/+page.svelte` | guard | Create form; POST to the API; inline field errors |
 | `/member/[id]` | `src/routes/(dashboard)/member/[id]/+page.svelte` | guard | Member profile plus that member's orders |
 | `/member/[id]/edit` | `src/routes/(dashboard)/member/[id]/edit/+page.svelte` | guard | Prefilled form; PATCH to the API |
+| `/form-element` | `src/routes/(dashboard)/form-element/+page.svelte` | guard | Showcase of reusable form controls |
 | `*` (inside the shell) | `src/routes/(dashboard)/+error.svelte` | guard | 404 that still shows sidebar + top nav |
 
 The `(dashboard)` group does not add a URL segment. It groups routes that share
@@ -67,6 +68,7 @@ routes/            page composition, page-local state, Tailwind markup
   (dashboard)/     shell + guard + error boundary + member pages
   api/members/     +server.ts handlers: parse, validate, call the store
 lib/components/    presentational components + colocated tests
+lib/components/form/ form controls: inputs, date pickers, dropdown, uploads, stepper
 lib/server/        server-only in-memory member store (never client code)
 lib/stores/        cross-component state (auth, UI)
 lib/utils/         pure functions: format, filter/sort/paginate, validation

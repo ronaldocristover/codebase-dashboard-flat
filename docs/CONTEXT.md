@@ -50,6 +50,7 @@ src/
   app.html                     font, <html lang="en">, title
   lib/
     components/                UI components + colocated tests
+    components/form/           reusable form controls (inputs, date pickers, uploads)
     mock/                      sample data (members, orders, dashboard)
     server/                    server-only modules (in-memory member store)
     stores/                    auth + UI state (in-memory)
@@ -75,6 +76,7 @@ src/
       member/[id]/+page.svelte member detail
       member/[id]/edit/+page.ts         loads member for editing
       member/[id]/edit/+page.svelte     edit form
+      form-element/+page.svelte         form element showcase
 ```
 
 ## Core conventions

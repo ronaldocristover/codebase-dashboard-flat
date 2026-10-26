@@ -9,6 +9,7 @@
 	const menu: Item[] = [
 		{ label: 'Dashboard', href: '/' },
 		{ label: 'Members', href: '/member' },
+		{ label: 'Form Element', href: '/form-element' },
 		{
 			label: 'Products',
 			anak: [{ label: 'All Products' }, { label: 'Categories' }, { label: 'Stocktake' }]
@@ -81,6 +82,9 @@
 		{:else if nama === 'Members'}
 			<circle cx="12" cy="8" r="3.5" />
 			<path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+		{:else if nama === 'Form Element'}
+			<rect x="3" y="4" width="18" height="16" rx="2" />
+			<path d="M7 9h10M7 13h6" />
 		{:else if nama === 'Products'}
 			<path d="M3 8l9-5 9 5-9 5-9-5z" />
 			<path d="M3 8v9l9 5 9-5V8" />
