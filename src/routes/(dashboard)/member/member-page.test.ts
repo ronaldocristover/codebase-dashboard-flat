@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { members } from '#lib/mock/members';
 import { formatRupiah } from '#lib/utils/format';
 import MemberPage from './+page.svelte';
+
+vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn() }));
 
 function rows(container: HTMLElement): string[][] {
 	return Array.from(container.querySelectorAll('tbody tr')).map((tr) =>
@@ -137,5 +139,18 @@ describe('member page', () => {
 		await fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
 
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
+	});
+
+	it('opens the export and import dialogs', async () => {
+		renderPage();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+		expect(screen.getByRole('dialog', { name: 'Export members' })).toBeTruthy();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+		expect(screen.queryByRole('dialog')).toBeNull();
+
+		await fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+		expect(screen.getByRole('dialog', { name: 'Import members' })).toBeTruthy();
 	});
 });

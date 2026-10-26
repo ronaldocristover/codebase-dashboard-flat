@@ -30,7 +30,8 @@ npm run preview   # preview the build
 
 - `/login` — sign-in form with a branding panel
 - `/` — stat cards, sales trend, 7-day orders, latest orders
-- `/member` — member table with search, status/date filters, sorting, pagination
+- `/member` — member table with search, status/date filters, sorting, pagination,
+  Excel export and import with a downloadable template
 - `/member/new` — create a member
 - `/member/[id]` — member detail with that member's orders
 - `/member/[id]/edit` — edit an existing member

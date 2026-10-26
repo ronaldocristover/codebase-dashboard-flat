@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import Breadcrumb from '#lib/components/Breadcrumb.svelte';
+	import MemberExportModal from '#lib/components/MemberExportModal.svelte';
+	import MemberImportModal from '#lib/components/MemberImportModal.svelte';
 	import Pagination from '#lib/components/Pagination.svelte';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import type { Member, MemberStatus, SortDir, SortKey } from '#lib/types';
@@ -17,6 +20,8 @@
 	let page = $state(1);
 	let sortKey = $state<SortKey>('bergabung');
 	let sortDir = $state<SortDir>('desc');
+	let exportOpen = $state(false);
+	let importOpen = $state(false);
 
 	const filtered = $derived(
 		filterMembers(data.members, { query, status: statusFilter, joinedWithin: rentang }, now)
@@ -67,12 +72,28 @@
 			<h2 class="text-xl font-semibold text-primary">Members</h2>
 			<p class="text-[11px] text-muted">{rows.total} members</p>
 		</div>
-		<a
-			href="/member/new"
-			class="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90"
-		>
-			+ Add Member
-		</a>
+		<div class="flex flex-wrap items-center gap-2">
+			<button
+				type="button"
+				class="rounded-md border border-line-strong bg-white px-3 py-2 text-xs font-medium text-ink hover:bg-cream"
+				onclick={() => (exportOpen = true)}
+			>
+				Export
+			</button>
+			<button
+				type="button"
+				class="rounded-md border border-line-strong bg-white px-3 py-2 text-xs font-medium text-ink hover:bg-cream"
+				onclick={() => (importOpen = true)}
+			>
+				Import
+			</button>
+			<a
+				href="/member/new"
+				class="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary/90"
+			>
+				+ Add Member
+			</a>
+		</div>
 	</div>
 
 	<div class="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-3">
@@ -220,3 +241,12 @@
 		{/if}
 	</div>
 </div>
+
+<MemberExportModal open={exportOpen} members={sorted} onClose={() => (exportOpen = false)} />
+<MemberImportModal
+	open={importOpen}
+	onClose={() => (importOpen = false)}
+	onImported={async () => {
+		await invalidateAll();
+	}}
+/>

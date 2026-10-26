@@ -27,7 +27,7 @@ Constraints that shape the design:
 | --- | --- | --- | --- |
 | `/login` | `src/routes/login/+page.svelte` | public | Email + password form, branding panel on the left |
 | `/` | `src/routes/(dashboard)/+page.svelte` | guard | 4 stat cards, line chart, bar chart, recent orders table |
-| `/member` | `src/routes/(dashboard)/member/+page.svelte` | guard | Member table: search, filter, sort, pagination |
+| `/member` | `src/routes/(dashboard)/member/+page.svelte` | guard | Member table: search, filter, sort, pagination; Excel import/export dialogs |
 | `/member/new` | `src/routes/(dashboard)/member/new/+page.svelte` | guard | Create form; POST to the API; inline field errors |
 | `/member/[id]` | `src/routes/(dashboard)/member/[id]/+page.svelte` | guard | Member profile plus that member's orders |
 | `/member/[id]/edit` | `src/routes/(dashboard)/member/[id]/edit/+page.svelte` | guard | Prefilled form; PATCH to the API |
@@ -159,6 +159,25 @@ the first member has none, member index `i` has `i % 7` orders, and invoice,
 amount, status, and date are computed from the index. Newly created members are
 not in that map, so they have no orders.
 
+### 4.5 Excel import and export
+
+The member list header opens two dialogs from `lib/components/`:
+
+- **Export** writes the current filtered and sorted rows (all pages, not just the
+  visible page) to a `.xlsx` workbook with Name, Email, Phone, Joined, Total
+  Spend, and Status columns.
+- **Import** reads a `.xlsx` workbook, validates each row with the shared
+  `validateMemberInput()`, previews valid and skipped rows, then creates the valid
+  rows through `POST /api/members`, one request per row. When the import finishes
+  the page calls `invalidateAll()` so the list reflects the new members.
+- The import dialog offers a downloadable template. The workbook has a `Members`
+  sheet with headers only and an `Example` sheet with one sample row. Only the
+  first sheet is read, so the example is never imported.
+
+`src/lib/utils/memberExcel.ts` owns the mapping and parsing; the Excel libraries
+(`read-excel-file`, `write-excel-file`) are loaded dynamically so the list page
+does not pay for them until a dialog is used.
+
 ## 5. Auth and guard
 
 Flow:
@@ -237,6 +256,8 @@ Hierarchy comes from text size, font weight, and borders — not shadows.
 | `Breadcrumb` | navigation trail | last item has no link |
 | `Pagination` | page controls | `onPageChange` callback, `aria-current` |
 | `LineChart` / `BarChart` | inline SVG charts | no library |
+| `Modal` | dialog shell | Escape, backdrop, focus trap, scroll lock |
+| `MemberImportModal` / `MemberExportModal` | Excel transfer dialogs | template download, row preview, per-row POST |
 
 All components use typed `$props()` and do not touch stores unless the state is
 genuinely global.
@@ -298,14 +319,16 @@ the adapter output.
   restarts. There is no persistence.
 - **Unauthenticated API.** Every endpoint is open. Demo only.
 - **No delete.** Members can be created and edited, not removed.
+- **Import is sequential and does not deduplicate.** Re-importing the same file
+  creates duplicate members; every row is a separate `POST`.
 - **No concurrency control.** Simultaneous writes are last-write-wins.
 - **Generated orders.** Orders are derived from seed indexes; new members have
   none, and orders do not change when a member is edited.
 - **Dead menu.** Products, Orders, and Reports have no pages; the Reports submenu
   is label-only.
 - **No production adapter.** The build succeeds; the app is not deploy-ready.
-- **Partial accessibility.** Escape and `aria-expanded` exist; focus trap and
-  `aria-describedby` for login errors do not.
+- **Partial accessibility.** Dialogs have Escape, backdrop close, a focus trap, and
+  focus restore; the mobile drawer still has no focus trap.
 - **Decorative charts.** The line chart uses `preserveAspectRatio="none"` to fill
   the width; data points are percentage-positioned HTML so they stay round, but
   stroke width still stretches on wide screens.

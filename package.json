@@ -30,5 +30,9 @@
 	},
 	"imports": {
 		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"read-excel-file": "^9.3.12",
+		"write-excel-file": "^4.1.1"
 	}
 }
