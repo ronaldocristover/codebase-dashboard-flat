@@ -27,6 +27,7 @@
 	let reading = $state(false);
 	let importing = $state(false);
 	let confirming = $state(false);
+	let processed = $state(0);
 
 	function reset() {
 		phase = 'idle';
@@ -39,9 +40,11 @@
 		reading = false;
 		importing = false;
 		confirming = false;
+		processed = 0;
 	}
 
 	function close() {
+		if (importing) return;
 		reset();
 		onClose();
 	}
@@ -87,24 +90,34 @@
 
 		importing = true;
 		importErrors = [];
+		processed = 0;
 		let count = 0;
 
 		// shortcut: one POST per row, add a bulk endpoint when imports grow large.
 		for (const { row, input } of parsed.rows) {
-			const res = await fetch('/api/members', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(input)
-			});
-			if (res.ok) {
-				count += 1;
-				continue;
+			try {
+				const res = await fetch('/api/members', {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify(input)
+				});
+				if (res.ok) {
+					count += 1;
+				} else {
+					const body = (await res.json().catch(() => ({}))) as {
+						errors?: Record<string, string>;
+					};
+					importErrors.push({
+						row,
+						message: body.errors
+							? Object.values(body.errors).join(' · ')
+							: 'Could not import this row'
+					});
+				}
+			} catch {
+				importErrors.push({ row, message: 'Network error. Please try again.' });
 			}
-			const body = (await res.json().catch(() => ({}))) as { errors?: Record<string, string> };
-			importErrors.push({
-				row,
-				message: body.errors ? Object.values(body.errors).join(' · ') : 'Could not import this row'
-			});
+			processed += 1;
 		}
 
 		imported = count;
@@ -145,15 +158,34 @@
 			</button>
 		</div>
 	{:else if confirming}
-		<p class="text-sm text-ink">
-			Import {parsed?.rows.length ?? 0}
-			{parsed?.rows.length === 1 ? 'member' : 'members'}?
-		</p>
-		<p class="mt-2 text-xs text-muted">
-			{parsed?.errors.length
-				? `${parsed.errors.length} skipped ${parsed.errors.length === 1 ? 'row is' : 'rows are'} not imported. `
-				: ''}Importing the same file twice creates duplicate members.
-		</p>
+		{#if importing}
+			<p class="text-sm text-ink" aria-live="polite">
+				Importing {processed} of {parsed?.rows.length ?? 0} members…
+			</p>
+			<div
+				class="mt-3 h-1.5 overflow-hidden rounded-full bg-cream"
+				role="progressbar"
+				aria-valuemin="0"
+				aria-valuemax={parsed?.rows.length ?? 0}
+				aria-valuenow={processed}
+			>
+				<div
+					class="h-full bg-primary"
+					style="width: {Math.round((processed / (parsed?.rows.length || 1)) * 100)}%"
+				></div>
+			</div>
+			<p class="mt-2 text-xs text-muted">Keep this dialog open until the import finishes.</p>
+		{:else}
+			<p class="text-sm text-ink">
+				Import {parsed?.rows.length ?? 0}
+				{parsed?.rows.length === 1 ? 'member' : 'members'}?
+			</p>
+			<p class="mt-2 text-xs text-muted">
+				{parsed?.errors.length
+					? `${parsed.errors.length} skipped ${parsed.errors.length === 1 ? 'row is' : 'rows are'} not imported. `
+					: ''}Importing the same file twice creates duplicate members.
+			</p>
+		{/if}
 
 		<div class="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
 			<button

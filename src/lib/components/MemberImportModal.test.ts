@@ -67,6 +67,30 @@ describe('MemberImportModal', () => {
 		);
 	});
 
+	it('shows progress while the import is running', async () => {
+		let finish!: (value: unknown) => void;
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockImplementation(
+				() =>
+					new Promise((resolve) => {
+						finish = resolve;
+					})
+			)
+		);
+		const { container } = renderModal();
+
+		await chooseFile(container);
+		await fireEvent.click(await screen.findByRole('button', { name: 'Import 1 member' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Confirm import' }));
+
+		expect(await screen.findByText('Importing 0 of 1 members…')).toBeTruthy();
+		expect(screen.getByRole('progressbar')).toBeTruthy();
+
+		finish({ ok: true, status: 201, json: async () => ({ id: 'MBR-9999' }) });
+		await waitFor(() => expect(screen.getByText('Imported 1 row.')).toBeTruthy());
+	});
+
 	it('returns to the preview when the confirmation is dismissed', async () => {
 		const { container } = renderModal();
 
