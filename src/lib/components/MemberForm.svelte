@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import Switch from '#lib/components/form/Switch.svelte';
 	import type { Member, MemberStatus } from '#lib/types';
 	import { validateMemberInput, type MemberInput } from '#lib/utils/memberValidation';
 
@@ -15,7 +16,7 @@
 	let nama = $state(untrack(() => member?.nama ?? ''));
 	let email = $state(untrack(() => member?.email ?? ''));
 	let hp = $state(untrack(() => member?.hp ?? ''));
-	let status = $state<MemberStatus>(untrack(() => member?.status ?? 'aktif'));
+	let aktif = $state(untrack(() => member?.status !== 'nonaktif'));
 
 	let errors = $state<Record<string, string>>({});
 	let saving = $state(false);
@@ -24,6 +25,7 @@
 		event.preventDefault();
 		if (saving) return;
 
+		const status: MemberStatus = aktif ? 'aktif' : 'nonaktif';
 		const input: MemberInput = { nama, email, hp, status };
 		const clientErrors = validateMemberInput(input);
 		if (Object.keys(clientErrors).length > 0) {
@@ -102,21 +104,9 @@
 			{/if}
 		</div>
 
-		<div>
-			<label for="member-status" class={label}>Status</label>
-			<select
-				id="member-status"
-				bind:value={status}
-				class={field}
-				aria-invalid={errors.status ? 'true' : undefined}
-				aria-describedby={errors.status ? 'member-status-error' : undefined}
-			>
-				<option value="aktif">Active</option>
-				<option value="nonaktif">Inactive</option>
-			</select>
-			{#if errors.status}
-				<p id="member-status-error" role="alert" class={error}>{errors.status}</p>
-			{/if}
+		<div class="sm:col-span-2">
+			<span class={label}>Status</span>
+			<Switch label={aktif ? 'Active' : 'Inactive'} bind:checked={aktif} />
 		</div>
 	</div>
 

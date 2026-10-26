@@ -86,7 +86,7 @@ describe('member page', () => {
 		await fireEvent.input(screen.getByLabelText('Search members'), {
 			target: { value: 'Siti Aminah' }
 		});
-		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });
+		await fireEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
 		await fireEvent.change(screen.getByLabelText('Joined'), { target: { value: '7' } });
 
 		expect(screen.getByText('No matching members')).toBeTruthy();
@@ -102,7 +102,7 @@ describe('member page', () => {
 
 	it('filters by status', async () => {
 		const { container } = renderPage();
-		await fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'nonaktif' } });
+		await fireEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
 
 		const list = rows(container);
 		expect(list.length).toBeGreaterThan(0);

@@ -51,6 +51,22 @@ describe('MemberForm', () => {
 		expect(screen.queryAllByRole('alert')).toHaveLength(0);
 	});
 
+	it('submits an inactive member when the status switch is off', async () => {
+		const onSubmit = vi.fn().mockResolvedValue(null);
+		const { container } = render(MemberForm, { props: { onSubmit } });
+
+		await fillValidFields();
+		const toggle = screen.getByRole('switch');
+		expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+		await fireEvent.click(toggle);
+		await submit(container);
+
+		await waitFor(() =>
+			expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ status: 'nonaktif' }))
+		);
+	});
+
 	it('shows server errors returned by onSubmit', async () => {
 		const onSubmit = vi.fn().mockResolvedValue({ email: 'Email is already used' });
 		const { container } = render(MemberForm, { props: { onSubmit } });

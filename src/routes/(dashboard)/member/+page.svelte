@@ -58,6 +58,11 @@
 	}
 
 	const field = 'rounded-md border border-line-strong bg-white px-2.5 py-2 text-xs text-ink';
+	const statusOptions: { value: 'semua' | MemberStatus; label: string }[] = [
+		{ value: 'semua', label: 'All' },
+		{ value: 'aktif', label: 'Active' },
+		{ value: 'nonaktif', label: 'Inactive' }
+	];
 </script>
 
 <svelte:head>
@@ -106,11 +111,27 @@
 			class="{field} min-w-[200px] flex-1"
 		/>
 
-		<select aria-label="Status" bind:value={statusFilter} onchange={resetPage} class={field}>
-			<option value="semua">Status: All</option>
-			<option value="aktif">Active</option>
-			<option value="nonaktif">Inactive</option>
-		</select>
+		<div role="radiogroup" aria-label="Status" class="flex items-center gap-1">
+			{#each statusOptions as option (option.value)}
+				<label class="cursor-pointer">
+					<input
+						type="radio"
+						name="status-filter"
+						value={option.value}
+						bind:group={statusFilter}
+						onchange={resetPage}
+						class="peer sr-only"
+					/>
+					<span
+						class="block rounded-md border px-2.5 py-2 text-xs peer-focus-visible:outline-2 peer-focus-visible:outline-primary {statusFilter === option.value
+							? 'border-primary bg-primary text-white'
+							: 'border-line-strong bg-white text-ink hover:bg-cream'}"
+					>
+						{option.label}
+					</span>
+				</label>
+			{/each}
+		</div>
 
 		<select aria-label="Joined" bind:value={rentang} onchange={resetPage} class={field}>
 			<option value="semua">Joined: All</option>
