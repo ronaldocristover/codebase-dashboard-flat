@@ -167,9 +167,10 @@ The member list header opens two dialogs from `lib/components/`:
   visible page) to a `.xlsx` workbook with Name, Email, Phone, Joined, Total
   Spend, and Status columns.
 - **Import** reads a `.xlsx` workbook, validates each row with the shared
-  `validateMemberInput()`, previews valid and skipped rows, then creates the valid
-  rows through `POST /api/members`, one request per row. When the import finishes
-  the page calls `invalidateAll()` so the list reflects the new members.
+  `validateMemberInput()`, previews valid and skipped rows, asks for confirmation,
+  then creates the valid rows through `POST /api/members`, one request per row.
+  When the import finishes the page calls `invalidateAll()` so the list reflects
+  the new members.
 - The import dialog offers a downloadable template. The workbook has one
   `Members` sheet with headers and five dummy rows, so it can be imported as-is
   to try the flow or edited with real data.

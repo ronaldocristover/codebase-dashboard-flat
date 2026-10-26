@@ -26,6 +26,7 @@
 	let templateError = $state('');
 	let reading = $state(false);
 	let importing = $state(false);
+	let confirming = $state(false);
 
 	function reset() {
 		phase = 'idle';
@@ -37,6 +38,7 @@
 		templateError = '';
 		reading = false;
 		importing = false;
+		confirming = false;
 	}
 
 	function close() {
@@ -142,6 +144,35 @@
 				Done
 			</button>
 		</div>
+	{:else if confirming}
+		<p class="text-sm text-ink">
+			Import {parsed?.rows.length ?? 0}
+			{parsed?.rows.length === 1 ? 'member' : 'members'}?
+		</p>
+		<p class="mt-2 text-xs text-muted">
+			{parsed?.errors.length
+				? `${parsed.errors.length} skipped ${parsed.errors.length === 1 ? 'row is' : 'rows are'} not imported. `
+				: ''}Importing the same file twice creates duplicate members.
+		</p>
+
+		<div class="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+			<button
+				type="button"
+				disabled={importing}
+				class="rounded-md border border-line-strong px-4 py-2.5 text-sm font-medium text-ink hover:bg-cream"
+				onclick={() => (confirming = false)}
+			>
+				Go back
+			</button>
+			<button
+				type="button"
+				disabled={importing}
+				class="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
+				onclick={runImport}
+			>
+				{importing ? 'Importing…' : 'Confirm import'}
+			</button>
+		</div>
 	{:else}
 		<p class="text-xs text-muted">
 			Upload an Excel workbook (.xlsx) with Name, Email, Phone, and Status columns. Imported members start
@@ -205,11 +236,9 @@
 				type="button"
 				disabled={importing || !parsed || parsed.rows.length === 0}
 				class="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60"
-				onclick={runImport}
+				onclick={() => (confirming = true)}
 			>
-				{importing
-					? 'Importing…'
-					: `Import ${parsed?.rows.length ?? 0} ${parsed?.rows.length === 1 ? 'member' : 'members'}`}
+				{`Import ${parsed?.rows.length ?? 0} ${parsed?.rows.length === 1 ? 'member' : 'members'}`}
 			</button>
 		</div>
 	{/if}
