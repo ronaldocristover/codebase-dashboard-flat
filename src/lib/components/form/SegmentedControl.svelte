@@ -25,7 +25,7 @@
 	<div
 		role="radiogroup"
 		aria-labelledby={label ? `${id}-label` : undefined}
-		class="inline-flex rounded-md border border-line-strong bg-white p-1"
+		class="flex flex-wrap items-center gap-1"
 	>
 		{#each options as option (option.value)}
 			<label class="cursor-pointer">
@@ -39,7 +39,7 @@
 					class="peer sr-only"
 				/>
 				<span
-					class="block rounded px-3 py-1 text-xs font-medium text-ink peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-60"
+					class="block rounded-md border border-line-strong bg-white px-2.5 py-2 text-xs text-ink hover:bg-cream peer-checked:border-primary peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-primary peer-disabled:cursor-not-allowed peer-disabled:opacity-60"
 				>
 					{option.label}
 				</span>

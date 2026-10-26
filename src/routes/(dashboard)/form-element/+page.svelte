@@ -300,7 +300,7 @@
 					placeholder="Search a city…"
 					hint="Arrow keys and Enter select an option."
 				/>
-				<div class="space-y-4">
+				<div class="min-w-0 space-y-4">
 					<TagInput
 						label="Skills"
 						bind:tags={skills}
@@ -408,7 +408,7 @@
 				<div>
 					<Stepper label="Quantity" bind:value={quantity} min={1} max={10} hint="Choose between 1 and 10." />
 				</div>
-				<div>
+				<div class="min-w-0">
 					<StepProgress steps={['Account', 'Store', 'Review']} current={step} />
 					<div class="mt-4 flex gap-2">
 						<Button

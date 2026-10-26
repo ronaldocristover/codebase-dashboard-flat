@@ -126,9 +126,9 @@
 							id={`${id}-option-${index}`}
 							role="option"
 							aria-selected={option.value === value}
-							class="cursor-pointer px-3 py-2 text-sm {index === active
-								? 'bg-cream text-ink'
-								: 'text-ink'} {option.value === value ? 'font-medium text-primary' : ''}"
+							class="cursor-pointer px-3 py-2 text-sm {option.value === value
+								? 'font-medium text-primary'
+								: 'text-ink'} {index === active ? 'bg-cream' : ''}"
 							onmousedown={(event) => event.preventDefault()}
 							onclick={() => choose(option)}
 							onkeydown={(event) => {

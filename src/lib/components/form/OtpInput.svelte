@@ -71,7 +71,7 @@
 <div>
 	<span id={`${id}-label`} class={labelClass}>{label}</span>
 	<div
-		class="flex gap-2"
+		class="flex w-full max-w-72 gap-2"
 		role="group"
 		aria-labelledby={`${id}-label`}
 		aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
@@ -94,7 +94,7 @@
 				oninput={(event) => onInput(index, event)}
 				onkeydown={(event) => onKeydown(index, event)}
 				onpaste={(event) => onPaste(index, event)}
-				class="h-11 w-10 rounded-md border border-line-strong bg-white text-center text-sm font-medium text-ink focus:outline-2 focus:outline-primary disabled:cursor-not-allowed disabled:bg-cream"
+				class="h-11 min-w-0 flex-1 rounded-md border border-line-strong bg-white text-center text-sm font-medium text-ink focus:outline-2 focus:outline-primary disabled:cursor-not-allowed disabled:bg-cream"
 			/>
 		{/each}
 	</div>

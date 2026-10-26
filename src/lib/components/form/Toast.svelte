@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Icon from './Icon.svelte';
+
 	let {
 		message,
 		variant = 'info',
@@ -34,11 +36,11 @@
 	{#if onDismiss}
 		<button
 			type="button"
-			class="cursor-pointer rounded px-1 text-current opacity-70 hover:opacity-100"
+			class="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-current opacity-70 hover:bg-black/5 hover:opacity-100"
 			aria-label="Dismiss notification"
 			onclick={onDismiss}
 		>
-			✕
+			<Icon name="x" class="h-3.5 w-3.5" />
 		</button>
 	{/if}
 </div>

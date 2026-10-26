@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
-	import { hintClass, inputClass, labelClass } from './formStyles';
+	import { hintClass, labelClass } from './formStyles';
 
 	let {
 		label,
@@ -72,7 +72,7 @@
 			{disabled}
 			onkeydown={onKeydown}
 			onblur={add}
-			class="{inputClass} border-0 px-1 py-1 focus:outline-none"
+			class="w-full bg-transparent py-1 text-sm text-ink placeholder:text-muted focus:outline-none"
 			aria-describedby={hint ? `${id}-hint` : undefined}
 		/>
 	</div>

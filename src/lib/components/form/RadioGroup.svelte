@@ -30,7 +30,7 @@
 				<input
 					type="radio"
 					{name}
-					{value}
+					value={option.value}
 					checked={value === option.value}
 					{disabled}
 					onchange={() => (value = option.value)}
