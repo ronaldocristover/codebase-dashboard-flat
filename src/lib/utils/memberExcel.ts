@@ -38,6 +38,15 @@ const EXPORT_HEADERS = ['Name', 'Email', 'Phone', 'Joined', 'Total Spend', 'Stat
 const HEADER_ROW = TEMPLATE_HEADERS.map((value) => ({ value, fontWeight: 'bold' as const }));
 const COLUMNS = [{ width: 28 }, { width: 32 }, { width: 20 }, { width: 14 }];
 
+// Sample rows so the downloaded template is importable without editing.
+export const TEMPLATE_ROWS = [
+	['Rina Wijaya', 'rina.wijaya@example.com', '081200000001', 'Active'],
+	['Dedi Kurniawan', 'dedi.kurniawan@example.com', '081200000002', 'Inactive'],
+	['Ayu Lestari', 'ayu.lestari@example.com', '081200000003', 'Active'],
+	['Fajar Nugroho', 'fajar.nugroho@example.com', '081200000004', 'Active'],
+	['Maya Sari', 'maya.sari@example.com', '081200000005', 'Inactive']
+];
+
 function normalizeStatus(raw: string): MemberStatus {
 	const value = raw.toLowerCase();
 	if (value === 'active' || value === 'aktif') return 'aktif';
@@ -96,11 +105,9 @@ export async function readMemberFile(file: File): Promise<ParsedImport> {
 
 export async function downloadTemplate(): Promise<void> {
 	const { default: writeXlsxFile } = await import('write-excel-file/browser');
-	const example = ['Siti Aminah', 'siti.aminah@example.com', '081234567890', 'Active'];
 
 	await writeXlsxFile([
-		{ sheet: 'Members', data: [HEADER_ROW], columns: COLUMNS },
-		{ sheet: 'Example', data: [HEADER_ROW, example], columns: COLUMNS }
+		{ sheet: 'Members', data: [HEADER_ROW, ...TEMPLATE_ROWS], columns: COLUMNS }
 	]).toFile('member-import-template.xlsx');
 }
 

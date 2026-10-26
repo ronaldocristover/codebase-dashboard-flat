@@ -170,9 +170,9 @@ The member list header opens two dialogs from `lib/components/`:
   `validateMemberInput()`, previews valid and skipped rows, then creates the valid
   rows through `POST /api/members`, one request per row. When the import finishes
   the page calls `invalidateAll()` so the list reflects the new members.
-- The import dialog offers a downloadable template. The workbook has a `Members`
-  sheet with headers only and an `Example` sheet with one sample row. Only the
-  first sheet is read, so the example is never imported.
+- The import dialog offers a downloadable template. The workbook has one
+  `Members` sheet with headers and five dummy rows, so it can be imported as-is
+  to try the flow or edited with real data.
 
 `src/lib/utils/memberExcel.ts` owns the mapping and parsing; the Excel libraries
 (`read-excel-file`, `write-excel-file`) are loaded dynamically so the list page

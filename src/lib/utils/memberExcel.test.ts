@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseMemberSheet } from './memberExcel';
+import { parseMemberSheet, TEMPLATE_ROWS } from './memberExcel';
 
 const HEADER = ['Name', 'Email', 'Phone', 'Status'];
 
@@ -72,5 +72,13 @@ describe('parseMemberSheet', () => {
 			{ row: 1, message: 'Missing column: Phone' },
 			{ row: 1, message: 'Missing column: Status' }
 		]);
+	});
+
+	it('keeps every template dummy row importable', () => {
+		const result = parseMemberSheet([HEADER, ...TEMPLATE_ROWS]);
+
+		expect(TEMPLATE_ROWS).toHaveLength(5);
+		expect(result.errors).toEqual([]);
+		expect(result.rows).toHaveLength(5);
 	});
 });
