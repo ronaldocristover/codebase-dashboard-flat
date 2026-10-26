@@ -35,6 +35,7 @@ npm run preview   # preview the build
 - `/member/new` — create a member
 - `/member/[id]` — member detail with that member's orders
 - `/member/[id]/edit` — edit an existing member
+- `/form-element` — showcase of reusable form controls (inputs, pickers, tabs, feedback)
 - Responsive sidebar (drawer on mobile), avatar dropdown with logout
 
 ## API

@@ -1,7 +1,11 @@
 <script lang="ts">
 	import Breadcrumb from '#lib/components/Breadcrumb.svelte';
+	import Accordion from '#lib/components/form/Accordion.svelte';
+	import Alert from '#lib/components/form/Alert.svelte';
 	import Button from '#lib/components/form/Button.svelte';
 	import Checkbox from '#lib/components/form/Checkbox.svelte';
+	import ColorInput from '#lib/components/form/ColorInput.svelte';
+	import Combobox from '#lib/components/form/Combobox.svelte';
 	import DateInput from '#lib/components/form/DateInput.svelte';
 	import DateRangeInput from '#lib/components/form/DateRangeInput.svelte';
 	import DropdownMenu from '#lib/components/form/DropdownMenu.svelte';
@@ -10,16 +14,25 @@
 	import MonthInput from '#lib/components/form/MonthInput.svelte';
 	import MultiDateInput from '#lib/components/form/MultiDateInput.svelte';
 	import MultiFileUpload from '#lib/components/form/MultiFileUpload.svelte';
+	import OtpInput from '#lib/components/form/OtpInput.svelte';
 	import PasswordInput from '#lib/components/form/PasswordInput.svelte';
 	import RadioGroup from '#lib/components/form/RadioGroup.svelte';
+	import Rating from '#lib/components/form/Rating.svelte';
 	import RichTextInput from '#lib/components/form/RichTextInput.svelte';
+	import SegmentedControl from '#lib/components/form/SegmentedControl.svelte';
 	import Select from '#lib/components/form/Select.svelte';
+	import Skeleton from '#lib/components/form/Skeleton.svelte';
+	import Slider from '#lib/components/form/Slider.svelte';
 	import StepProgress from '#lib/components/form/StepProgress.svelte';
 	import Stepper from '#lib/components/form/Stepper.svelte';
 	import Switch from '#lib/components/form/Switch.svelte';
+	import Tabs from '#lib/components/form/Tabs.svelte';
+	import TagInput from '#lib/components/form/TagInput.svelte';
 	import TextArea from '#lib/components/form/TextArea.svelte';
 	import TextInput from '#lib/components/form/TextInput.svelte';
 	import TimeInput from '#lib/components/form/TimeInput.svelte';
+	import Toast from '#lib/components/form/Toast.svelte';
+	import Tooltip from '#lib/components/form/Tooltip.svelte';
 
 	let name = $state('');
 	let email = $state('');
@@ -47,6 +60,29 @@
 	let galleryFiles = $state<File[]>([]);
 	let quantity = $state(1);
 	let step = $state(1);
+	let size = $state(40);
+	let accent = $state('#014baa');
+	let city = $state('');
+	let skills = $state(['Svelte', 'TypeScript']);
+	let otp = $state('');
+	let view = $state('month');
+	let rating = $state(4);
+	let tab = $state('overview');
+	let toastVisible = $state(false);
+	let alertVisible = $state(true);
+
+	const cities = [
+		{ value: 'jkt', label: 'Jakarta' },
+		{ value: 'bdg', label: 'Bandung' },
+		{ value: 'sby', label: 'Surabaya' },
+		{ value: 'mdn', label: 'Medan' },
+		{ value: 'dps', label: 'Denpasar' }
+	];
+
+	function showToast() {
+		toastVisible = false;
+		setTimeout(() => (toastVisible = true), 0);
+	}
 
 	function saveDemo() {
 		saving = true;
@@ -226,6 +262,130 @@
 					max={5}
 					hint="Pick up to five dates."
 				/>
+			</div>
+		</section>
+
+		<section class="rounded-lg border border-line bg-white lg:col-span-2">
+			{@render panel('Range, color, and rating', 'Slider, color picker, segmented control, and star rating.')}
+			<div class="grid gap-4 p-4 lg:grid-cols-2">
+				<Slider
+					label="Storage used"
+					bind:value={size}
+					min={0}
+					max={100}
+					suffix="%"
+					hint="Drag or use the arrow keys."
+				/>
+				<ColorInput label="Brand color" bind:value={accent} hint="Pick a swatch or type a hex value." />
+				<SegmentedControl
+					label="View"
+					bind:value={view}
+					options={[
+						{ value: 'day', label: 'Day' },
+						{ value: 'week', label: 'Week' },
+						{ value: 'month', label: 'Month' }
+					]}
+				/>
+				<Rating label="Product rating" bind:value={rating} hint="Use the arrow keys to change the score." />
+			</div>
+		</section>
+
+		<section class="rounded-lg border border-line bg-white lg:col-span-2">
+			{@render panel('Search, tags, and one-time code', 'Filtered combobox, tag entry, and OTP cells.')}
+			<div class="grid gap-4 p-4 lg:grid-cols-2">
+				<Combobox
+					label="City"
+					bind:value={city}
+					options={cities}
+					placeholder="Search a city…"
+					hint="Arrow keys and Enter select an option."
+				/>
+				<div class="space-y-4">
+					<TagInput
+						label="Skills"
+						bind:tags={skills}
+						hint="Enter or comma adds a tag. Backspace removes the last one."
+					/>
+					<OtpInput
+						label="Verification code"
+						bind:value={otp}
+						hint="Paste a six-digit code to fill every cell."
+					/>
+				</div>
+			</div>
+		</section>
+
+		<section class="rounded-lg border border-line bg-white lg:col-span-2">
+			{@render panel('Tabs and accordion', 'Keyboard-friendly tabs and a single-open accordion.')}
+			<div class="grid gap-4 p-4 lg:grid-cols-2">
+				<Tabs
+					bind:value={tab}
+					label="Product sections"
+					tabs={[
+						{ value: 'overview', label: 'Overview' },
+						{ value: 'pricing', label: 'Pricing' },
+						{ value: 'stock', label: 'Stock' }
+					]}
+				>
+					<p>
+						{tab === 'overview'
+							? 'Overview panel: name, category, and description.'
+							: tab === 'pricing'
+								? 'Pricing panel: base price, discount, and tax.'
+								: 'Stock panel: warehouse count and restock threshold.'}
+					</p>
+				</Tabs>
+				<Accordion
+					items={[
+						{
+							title: 'How are members imported?',
+							content: 'Upload an .xlsx workbook with Name, Email, Phone, and Status columns.'
+						},
+						{
+							title: 'What happens to skipped rows?',
+							content: 'Rows that fail validation are listed before the import runs.'
+						},
+						{
+							title: 'Can an import be undone?',
+							content: 'No. Importing the same file twice creates duplicate members.'
+						}
+					]}
+				/>
+			</div>
+		</section>
+
+		<section class="rounded-lg border border-line bg-white lg:col-span-2">
+			{@render panel('Feedback and loading', 'Alert, toast, skeleton, and tooltip.')}
+			<div class="grid gap-4 p-4 lg:grid-cols-2">
+				<div class="space-y-3">
+					{#if alertVisible}
+						<Alert variant="warning" title="Stock running low" onDismiss={() => (alertVisible = false)}>
+							Three products are below their restock threshold.
+						</Alert>
+					{:else}
+						<Button variant="secondary" onclick={() => (alertVisible = true)}>Show alert</Button>
+					{/if}
+
+					<div class="flex flex-wrap items-center gap-2">
+						<Button onclick={showToast}>Show toast</Button>
+						<Tooltip text="Saved to your account">
+							<Button variant="secondary">Hover or focus me</Button>
+						</Tooltip>
+					</div>
+
+					{#if toastVisible}
+						<Toast
+							variant="success"
+							message="Member saved successfully."
+							onDismiss={() => (toastVisible = false)}
+						/>
+					{/if}
+				</div>
+
+				<div class="rounded-md border border-line p-4">
+					<p class="mb-3 text-xs font-medium text-ink">Loading placeholder</p>
+					<Skeleton lines={4} />
+				</div>
 			</div>
 		</section>
 
