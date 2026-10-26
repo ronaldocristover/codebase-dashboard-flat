@@ -36,11 +36,14 @@ describe('Sidebar', () => {
 
 		expect(screen.queryByRole('link', { name: /Pesanan/ })).toBeNull();
 		expect(screen.getByRole('button', { name: /Pesanan/ })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: /Laporan/ })).toBeNull();
+		expect(screen.getByRole('button', { name: /Laporan/ })).toBeTruthy();
 		expect(document.querySelector('a[href="/pesanan"]')).toBeNull();
 		expect(document.querySelector('a[href="/produk"]')).toBeNull();
+		expect(document.querySelector('a[href="/laporan"]')).toBeNull();
 	});
 
-	it('membuka submenu Produk dan hanya satu submenu terbuka', async () => {
+	it('membuka submenu Produk dan menutupnya saat Laporan diklik', async () => {
 		render(Sidebar);
 
 		expect(screen.queryByText('Semua Produk')).toBeNull();
@@ -48,6 +51,19 @@ describe('Sidebar', () => {
 		expect(screen.getByText('Semua Produk')).toBeTruthy();
 
 		await fireEvent.click(screen.getByRole('button', { name: /Laporan/ }));
+		expect(screen.queryByText('Semua Produk')).toBeNull();
+		expect(screen.queryByText('Penjualan')).toBeNull();
+		expect(screen.queryByText('Stok')).toBeNull();
+	});
+
+	it('submenu Produk menutup saat tombolnya diklik lagi', async () => {
+		render(Sidebar);
+		const tombol = () => screen.getByRole('button', { name: /^Produk/ });
+
+		await fireEvent.click(tombol());
+		expect(screen.getByText('Semua Produk')).toBeTruthy();
+
+		await fireEvent.click(tombol());
 		expect(screen.queryByText('Semua Produk')).toBeNull();
 	});
 

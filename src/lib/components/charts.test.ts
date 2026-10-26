@@ -32,7 +32,8 @@ describe('LineChart', () => {
 
 		const garis = container.querySelector('polyline');
 		expect(garis?.getAttribute('points')?.trim().split(/\s+/)).toHaveLength(salesTrend.length);
-		expect(container.querySelectorAll('circle')).toHaveLength(salesTrend.length);
+		expect(container.querySelectorAll('[data-titik]')).toHaveLength(salesTrend.length);
+		expect(container.querySelector('svg circle')).toBeNull();
 		expect(screen.getByText(salesTrend[0].label)).toBeTruthy();
 	});
 

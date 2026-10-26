@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Logo from './Logo.svelte';
 	import UserMenu from './UserMenu.svelte';
 
 	let { judul, onToggleMenu }: { judul: string; onToggleMenu: () => void } = $props();
@@ -16,7 +17,11 @@
 		<span class="h-0.5 w-4 rounded bg-primary"></span>
 	</button>
 
-	<h1 class="flex-1 text-lg font-semibold text-primary">{judul}</h1>
+	<div class="flex-1 md:hidden">
+		<Logo size="sm" />
+	</div>
+
+	<h1 class="hidden flex-1 text-xl font-semibold text-primary md:block md:text-2xl">{judul}</h1>
 
 	<UserMenu />
 </header>

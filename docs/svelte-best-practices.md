@@ -198,10 +198,14 @@ Aturan:
 
 ## 8. SvelteKit 3: import `#lib`, bukan `$lib`
 
-SvelteKit 3 memakai alias `#lib`. Di repo ini alias didefinisikan dua kali:
+SvelteKit 3 memakai alias `#lib`. Di repo ini alias hanya dipetakan untuk
+subpath, bukan bare `#lib`:
 
-- `package.json` → `"imports": { "#lib": "./src/lib/index.js", "#lib/*": "./src/lib/*" }`
-- `tsconfig.json` → `paths` untuk TypeScript dan editor
+- `package.json` → `"imports": { "#lib/*": "./src/lib/*" }`
+- `tsconfig.json` → `paths: { "#lib/*": ["./src/lib/*"] }`
+
+Bare `#lib` sengaja tidak dipetakan karena tidak ada yang mengimpornya dan
+`src/lib/index.ts` bukan API publik.
 
 Contoh pemakaian:
 

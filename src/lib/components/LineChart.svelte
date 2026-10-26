@@ -27,31 +27,39 @@
 	);
 </script>
 
-<svg
-	viewBox="0 0 {LEBAR} {TINGGI}"
-	class="h-24 w-full"
-	preserveAspectRatio="none"
-	role="img"
-	aria-label="Tren penjualan"
->
-	{#each [14, 38, 62, 86] as y (y)}
-		<line x1="0" y1={y} x2={LEBAR} y2={y} class="stroke-line" stroke-width="1" />
-	{/each}
+<div class="relative h-24">
+	<svg
+		viewBox="0 0 {LEBAR} {TINGGI}"
+		class="h-full w-full"
+		preserveAspectRatio="none"
+		role="img"
+		aria-label="Tren penjualan"
+	>
+		{#each [14, 38, 62, 86] as y (y)}
+			<line x1="0" y1={y} x2={LEBAR} y2={y} class="stroke-line" stroke-width="1" />
+		{/each}
 
-	<polygon points={area} class="fill-primary-soft" />
-	<polyline
-		points={garis}
-		fill="none"
-		class="stroke-primary"
-		stroke-width="2"
-		stroke-linejoin="round"
-		stroke-linecap="round"
-	/>
+		<polygon points={area} class="fill-primary-soft" />
+		<polyline
+			points={garis}
+			fill="none"
+			class="stroke-primary"
+			stroke-width="2"
+			stroke-linejoin="round"
+			stroke-linecap="round"
+		/>
+	</svg>
 
-	{#each koordinat as titik, i (i)}
-		<circle cx={titik.x} cy={titik.y} r="2.4" class="fill-white stroke-primary" stroke-width="1.5" />
-	{/each}
-</svg>
+	<div aria-hidden="true">
+		{#each koordinat as titik, i (i)}
+			<span
+				data-titik
+				class="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-white"
+				style="left: {(titik.x / LEBAR) * 100}%; top: {(titik.y / TINGGI) * 100}%"
+			></span>
+		{/each}
+	</div>
+</div>
 
 <div class="mt-1 flex justify-between gap-1 text-[9px] text-muted">
 	{#each labelSumbu as titik, i (i)}

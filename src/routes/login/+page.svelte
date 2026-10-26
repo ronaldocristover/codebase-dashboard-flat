@@ -64,7 +64,7 @@
 
 	<div class="flex items-center justify-center p-6 md:p-10">
 		<form class="w-full max-w-sm" onsubmit={kirim} novalidate>
-			<h2 class="text-lg font-semibold text-primary">Masuk</h2>
+			<h2 class="text-xl font-semibold text-primary">Masuk</h2>
 			<p class="mb-5 mt-1 text-xs text-muted">Gunakan akun admin toko kamu</p>
 
 			<label for="email" class="mb-1 block text-xs font-medium text-ink">Email</label>
@@ -76,9 +76,11 @@
 				class={kolom}
 				placeholder="nama@tokoku.id"
 				autocomplete="email"
+				aria-invalid={errorEmail ? true : undefined}
+				aria-describedby={errorEmail ? 'email-error' : undefined}
 			/>
 			{#if errorEmail}
-				<p class="mt-1 text-xs font-medium text-danger">{errorEmail}</p>
+				<p id="email-error" role="alert" class="mt-1 text-xs font-medium text-danger">{errorEmail}</p>
 			{/if}
 
 			<label for="password" class="mb-1 mt-4 block text-xs font-medium text-ink">
@@ -92,9 +94,13 @@
 				class={kolom}
 				placeholder="••••••••"
 				autocomplete="current-password"
+				aria-invalid={errorPassword ? true : undefined}
+				aria-describedby={errorPassword ? 'password-error' : undefined}
 			/>
 			{#if errorPassword}
-				<p class="mt-1 text-xs font-medium text-danger">{errorPassword}</p>
+				<p id="password-error" role="alert" class="mt-1 text-xs font-medium text-danger">
+					{errorPassword}
+				</p>
 			{/if}
 
 			<div class="mt-3 flex items-center justify-between text-xs text-ink">
@@ -102,7 +108,7 @@
 					<input type="checkbox" class="h-3.5 w-3.5 accent-primary" />
 					Ingat saya
 				</label>
-				<a href="/login" class="font-medium text-primary">Lupa sandi?</a>
+				<button type="button" aria-disabled="true" class="font-medium text-primary">Lupa sandi?</button>
 			</div>
 
 			<button
@@ -113,7 +119,8 @@
 			</button>
 
 			<p class="mt-4 text-center text-xs text-muted">
-				Belum punya akun? <a href="/login" class="font-medium text-primary">Daftar</a>
+				Belum punya akun?
+				<button type="button" aria-disabled="true" class="font-medium text-primary">Daftar</button>
 			</p>
 		</form>
 	</div>

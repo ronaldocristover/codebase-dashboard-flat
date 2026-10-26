@@ -63,7 +63,7 @@
 
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div>
-			<h2 class="text-base font-semibold text-primary">Data Member</h2>
+			<h2 class="text-xl font-semibold text-primary">Data Member</h2>
 			<p class="text-[11px] text-muted">{halaman.total} member</p>
 		</div>
 		<button

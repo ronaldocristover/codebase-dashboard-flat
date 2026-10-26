@@ -22,6 +22,9 @@ describe('halaman member', () => {
 		expect(screen.getByText('Member', { selector: 'span' })).toBeTruthy();
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
 		expect(screen.getByText(/Menampilkan 1–10 dari 50 member/)).toBeTruthy();
+
+		const judul = screen.getByRole('heading', { name: 'Data Member' });
+		expect(judul.className).toContain('text-xl');
 	});
 
 	it('mencari member lewat kolom search', async () => {

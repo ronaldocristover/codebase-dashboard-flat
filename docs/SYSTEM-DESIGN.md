@@ -206,8 +206,9 @@ output adapter.
 - **Tanpa adapter produksi.** Build sukses, belum siap deploy.
 - **Aksesibilitas sebagian.** Escape dan `aria-expanded` sudah ada; focus trap dan
   `aria-describedby` untuk pesan error login belum.
-- **Grafik dekoratif.** `preserveAspectRatio="none"` membuat titik line chart
-  terdistorsi; cukup untuk demo, bukan untuk data yang perlu dibaca presisi.
+- **Grafik dekoratif.** Line chart memakai `preserveAspectRatio="none"` agar
+  mengisi lebar; titik data dirender sebagai elemen HTML persentase supaya tetap
+  bulat, tetapi ketebalan stroke garis masih ikut melar di layar lebar.
 
 ## 12. Jalur pengembangan berikutnya
 

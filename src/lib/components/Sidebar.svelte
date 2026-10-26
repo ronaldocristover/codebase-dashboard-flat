@@ -14,10 +14,7 @@
 			anak: [{ label: 'Semua Produk' }, { label: 'Kategori' }, { label: 'Stok Opname' }]
 		},
 		{ label: 'Pesanan', badge: '12' },
-		{
-			label: 'Laporan',
-			anak: [{ label: 'Penjualan' }, { label: 'Stok' }]
-		}
+		{ label: 'Laporan' }
 	];
 
 	const ciut = $derived($sidebarCollapsed);
@@ -55,6 +52,7 @@
 		if (item.anak) {
 			submenu = submenu === item.label ? null : item.label;
 		} else {
+			submenu = null;
 			setMobileNav(false);
 		}
 	}

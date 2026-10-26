@@ -8,7 +8,7 @@
 
 <div class="rounded-lg border border-line bg-white p-8 text-center">
 	<p class="text-[10px] uppercase tracking-[0.12em] text-muted">Error {page.status}</p>
-	<h1 class="mt-1 text-lg font-semibold text-primary">Halaman tidak ditemukan</h1>
+	<h1 class="mt-1 text-xl font-semibold text-primary">Halaman tidak ditemukan</h1>
 	<p class="mt-1 text-xs text-muted">
 		Menu ini masih contoh tampilan dan belum punya halaman sendiri.
 	</p>

@@ -31,6 +31,34 @@ describe('halaman login', () => {
 		expect(goto).not.toHaveBeenCalled();
 	});
 
+	it('menghubungkan pesan error ke input', async () => {
+		render(LoginPage);
+		await fireEvent.click(screen.getByRole('button', { name: 'Masuk ke Dashboard' }));
+
+		const errorEmail = screen.getByText('Email wajib diisi');
+		const errorPassword = screen.getByText('Kata sandi wajib diisi');
+		expect(errorEmail.getAttribute('role')).toBe('alert');
+		expect(errorPassword.getAttribute('role')).toBe('alert');
+		expect(errorEmail.id).toBe('email-error');
+		expect(errorPassword.id).toBe('password-error');
+
+		const email = screen.getByLabelText('Email');
+		const password = screen.getByLabelText('Kata sandi');
+		expect(email.getAttribute('aria-describedby')).toBe('email-error');
+		expect(password.getAttribute('aria-describedby')).toBe('password-error');
+		expect(email.getAttribute('aria-invalid')).toBe('true');
+		expect(password.getAttribute('aria-invalid')).toBe('true');
+	});
+
+	it('placeholder lupa sandi dan daftar adalah tombol, bukan tautan', () => {
+		render(LoginPage);
+
+		expect(screen.getByRole('button', { name: 'Lupa sandi?' })).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Daftar' })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: 'Lupa sandi?' })).toBeNull();
+		expect(screen.queryByRole('link', { name: 'Daftar' })).toBeNull();
+	});
+
 	it('menolak format email salah', async () => {
 		render(LoginPage);
 
