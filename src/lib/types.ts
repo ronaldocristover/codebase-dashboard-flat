@@ -48,3 +48,32 @@ export interface DashboardStat {
 	delta: string;
 	arah: 'naik' | 'turun';
 }
+
+export interface FunnelStep {
+	label: string;
+	visitors: number;
+}
+
+export interface CustomerSegment {
+	label: string;
+	count: number;
+}
+
+export interface ChannelRevenue {
+	channel: string;
+	amount: number;
+}
+
+export interface TopProduct {
+	name: string;
+	category: string;
+	units: number;
+	revenue: number;
+}
+
+export interface StockAlert {
+	name: string;
+	sku: string;
+	stock: number;
+	threshold: number;
+}

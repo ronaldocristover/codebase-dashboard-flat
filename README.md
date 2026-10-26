@@ -29,7 +29,8 @@ npm run preview   # preview the build
 ## Features
 
 - `/login` — sign-in form with a branding panel
-- `/` — stat cards, sales trend, 7-day orders, latest orders
+- `/` — ecommerce dashboard: KPI cards, sales trend, conversion funnel,
+  customer mix, revenue by channel, top products, inventory alerts, recent orders
 - `/member` — member table with search, status/date filters, sorting, pagination,
   Excel export and import with a downloadable template
 - `/member/new` — create a member

@@ -1,4 +1,14 @@
-import type { DashboardStat, DayCount, OrderSummary, SalesPoint } from '../types';
+import type {
+	ChannelRevenue,
+	CustomerSegment,
+	DashboardStat,
+	DayCount,
+	FunnelStep,
+	OrderSummary,
+	SalesPoint,
+	StockAlert,
+	TopProduct
+} from '../types';
 import { formatTanggalSingkat, isoDaysAgo } from '../utils/format';
 
 export const stats: DashboardStat[] = [
@@ -42,4 +52,39 @@ export const recentOrders: OrderSummary[] = [
 	{ invoice: 'INV-2039', nama: 'Andi Wijaya', nominal: 89000, status: 'menunggu' },
 	{ invoice: 'INV-2038', nama: 'Rina Marlina', nominal: 412000, status: 'lunas' },
 	{ invoice: 'INV-2037', nama: 'Dewi Kartika', nominal: 176000, status: 'dikirim' }
+];
+
+export const funnelSteps: FunnelStep[] = [
+	{ label: 'Sessions', visitors: 24800 },
+	{ label: 'Product views', visitors: 9640 },
+	{ label: 'Added to cart', visitors: 2410 },
+	{ label: 'Checkout started', visitors: 1105 },
+	{ label: 'Paid', visitors: 842 }
+];
+
+export const customerMix: CustomerSegment[] = [
+	{ label: 'New customers', count: 1284 },
+	{ label: 'Returning customers', count: 964 }
+];
+
+export const channelRevenue: ChannelRevenue[] = [
+	{ channel: 'Online store', amount: 48600000 },
+	{ channel: 'Marketplace', amount: 31200000 },
+	{ channel: 'Social commerce', amount: 12400000 },
+	{ channel: 'Offline store', amount: 6800000 }
+];
+
+export const topProducts: TopProduct[] = [
+	{ name: 'Aurora Linen Shirt', category: 'Apparel', units: 412, revenue: 18540000 },
+	{ name: 'Nusa Canvas Tote', category: 'Bags', units: 368, revenue: 11040000 },
+	{ name: 'Rimba Ceramic Mug', category: 'Home', units: 296, revenue: 4440000 },
+	{ name: 'Sagara Sandals', category: 'Footwear', units: 244, revenue: 7320000 },
+	{ name: 'Senja Cotton Scarf', category: 'Accessories', units: 208, revenue: 3120000 }
+];
+
+export const stockAlerts: StockAlert[] = [
+	{ name: 'Nusa Canvas Tote', sku: 'BAG-014', stock: 4, threshold: 10 },
+	{ name: 'Rimba Ceramic Mug', sku: 'HOM-032', stock: 0, threshold: 12 },
+	{ name: 'Aurora Linen Shirt', sku: 'APP-021', stock: 6, threshold: 15 },
+	{ name: 'Sagara Sandals', sku: 'FTW-008', stock: 9, threshold: 10 }
 ];
