@@ -1,109 +1,135 @@
 # AGENTS.md — TokoKu Dashboard
 
-Aturan untuk agent yang bekerja di repo ini. Baca juga:
+Rules for agents working in this repo. Read also:
 
-- [`docs/CONTEXT.md`](docs/CONTEXT.md) — konteks proyek, perintah, batasan
-- [`docs/SYSTEM-DESIGN.md`](docs/SYSTEM-DESIGN.md) — route, lapisan, alur data
-- [`docs/svelte-best-practices.md`](docs/svelte-best-practices.md) — aturan Svelte 5 / SvelteKit 3
+- [`docs/CONTEXT.md`](docs/CONTEXT.md) — project context, commands, limits
+- [`docs/SYSTEM-DESIGN.md`](docs/SYSTEM-DESIGN.md) — routes, layers, data flow
+- [`docs/svelte-best-practices.md`](docs/svelte-best-practices.md) — Svelte 5 / SvelteKit 3 rules
 
-## Apa ini
+## What this is
 
-Dashboard admin toko online fiktif. Data mock, tanpa backend. Fokus: UI flat,
-responsif, berbahasa Indonesia.
+Admin dashboard for a fictional online store. Mock data served by a dummy
+in-memory API. No database, no production backend. Focus: flat UI, responsive,
+English copy.
 
-## Perintah
+## Commands
 
 ```sh
-npm run dev                 # dev server (default 5173)
-npm test                    # semua test, sekali jalan
+npm run dev                 # dev server (default 5173, 5174 if taken)
+npm test                    # all tests, single run
 npm run test:unit           # vitest watch
-npm run check               # svelte-check, wajib 0 error
-npm run build               # verifikasi build
+npm run check               # svelte-check, must be 0 errors
+npm run build               # build verification
 ```
 
-Jangan hentikan dev server dengan `pkill -f "vite dev"`; pola itu bisa membunuh
-shell pemanggil. Pakai `kill $(lsof -t -i:5174)`.
+Do not stop the dev server with `pkill -f "vite dev"`; the pattern matches the
+calling shell and can kill it too. Use `kill $(lsof -t -i:5174)`, with the port
+the server actually runs on.
 
-## Struktur dan import
+## Structure and imports
 
-- Import internal wajib `#lib/...` (`$lib` sudah tidak dipakai di SvelteKit 3).
-- `src/routes/` untuk halaman dan komposisi; `src/lib/components/` untuk komponen;
-  `src/lib/utils/` untuk logika murni; `src/lib/stores/` untuk state global;
-  `src/lib/mock/` untuk data contoh.
-- Jangan mengimpor dari `src/routes/` ke dalam `src/lib/`.
-- Logika filter/sort/paginate/format harus berupa fungsi murni di `utils`,
-  bukan di dalam markup.
+- Internal imports always `#lib/...` (`$lib` is gone in SvelteKit 3).
+- `src/routes/` for pages and composition; `src/lib/components/` for components;
+  `src/lib/utils/` for pure logic; `src/lib/stores/` for global state;
+  `src/lib/mock/` for sample data; `src/lib/server/` for server-only modules.
+- Never import from `src/routes/` into `src/lib/`.
+- `#lib/server/*` is server-only. Import it from `+server.ts` (or
+  `+page.server.ts`) only — never from components, pages, or `+page.ts`.
+- Filter/sort/paginate/format logic stays in pure functions under `utils`, not in
+  markup.
+
+## Dummy API and data
+
+- Store: `src/lib/server/memberStore.ts` — module-level arrays seeded from
+  `src/lib/mock/members.ts`. `src/lib/mock/orders.ts` derives sample orders per
+  member. Everything resets when the server restarts; there is no persistence.
+- Endpoints: `GET /api/members`, `POST /api/members`, `GET /api/members/[id]`,
+  `PATCH /api/members/[id]`, `GET /api/members/[id]/orders`.
+- Endpoints are unauthenticated. Acceptable only because this is a demo; a real
+  API needs auth on every route.
+- Validation lives in `src/lib/utils/memberValidation.ts` so API handlers and
+  forms share one rule set. Do not duplicate field rules in markup.
+- Pages read data through `fetch` in `+page.ts`. Do not import the store into
+  page or component code.
+- Keep mock member dates relative (`isoDaysAgo`) so the 7/30/90-day filters are
+  never empty.
 
 ## Svelte 5
 
-- Runes mode dipaksa compiler. Jangan pakai `export let`, `$:`, `on:click`, slot,
-  atau store auto-subscription untuk state halaman.
-- `$state` untuk nilai yang berubah, `$derived` / `$derived.by` untuk nilai
-  turunan, `$effect` hanya untuk efek samping dengan cleanup.
-- Props selalu bertipe: `let { x }: { x: string } = $props()`.
-- Anak tidak memutasi props; gunakan callback (`onPageChange`) atau `$bindable`
-  bila benar-benar perlu.
-- Jangan menjawab pertanyaan API Svelte dari ingatan. Pakai Svelte MCP di
-  `opencode.jsonc` (`list-sections`, `get-documentation`, `svelte-autofixer`) atau
-  Context7, lalu ikuti dokumentasi terbaru.
+- Runes mode is forced by the compiler. No `export let`, `$:`, `on:click`, slots,
+  or store auto-subscription for page state.
+- `$state` for changing values, `$derived` / `$derived.by` for derived values,
+  `$effect` only for side effects with cleanup.
+- Props always typed: `let { x }: { x: string } = $props()`.
+- Children do not mutate props; use callbacks (`onPageChange`) or `$bindable` when
+  two-way binding is truly needed.
+- Never answer Svelte API questions from memory. Use the Svelte MCP in
+  `opencode.jsonc` (`list-sections`, `get-documentation`, `svelte-autofixer`) or
+  Context7, then follow the current docs.
 
 ## SvelteKit 3
 
-- Navigasi state dari `$app/state` (`page`, `navigating`), bukan `$app/stores`.
-- Info runtime dari `$app/env` (`browser`, `building`, `dev`), bukan
+- Navigation state from `$app/state` (`page`, `navigating`), not `$app/stores`.
+- Runtime info from `$app/env` (`browser`, `building`, `dev`), not
   `$app/environment`.
-- Environment variable baru lewat `src/env.ts` + `defineEnvVars`; jangan pakai
+- New environment variables go through `src/env.ts` + `defineEnvVars`; no
   `$env/*`.
-- Adapter dipasang di `vite.config.ts` dalam `sveltekit()`. Tidak ada
+- The adapter is configured in `vite.config.ts` inside `sveltekit()`. There is no
   `svelte.config.js`.
-- Guard ada di `(dashboard)/+layout.ts` dengan `ssr = false`. Jangan hapus
-  `ssr = false` selama auth masih di store memori.
-- Redirect memakai `redirect(303, '/login')` dan dilempar, bukan di-return.
+- API routes are `+server.ts` files under `src/routes/api/`; return `json(...)`
+  and throw `error(...)` from `@sveltejs/kit`. Validate the body before touching
+  the store.
+- Guard lives in `(dashboard)/+layout.ts` with `ssr = false`. Do not remove
+  `ssr = false` while auth is still an in-memory store.
+- Redirects use `redirect(303, '/login')` and are thrown, not returned.
 
-## UI dan styling
+## UI and styling
 
-- Token warna dan font hanya di `src/routes/layout.css` (`@theme`). Jangan menulis
-  hex langsung di markup.
-- Palet: `primary #014BAA`, `cream #F8F3F0`, plus token `line`, `ink`, `muted`,
+- Color and font tokens live only in `src/routes/layout.css` (`@theme`). Never
+  write raw hex in markup.
+- Palette: `primary #014BAA`, `cream #F8F3F0`, plus `line`, `ink`, `muted`,
   `success`, `warning`, `danger`.
-- Flat design: tanpa gradient, tanpa `shadow-*`, radius maksimum `rounded-lg`.
-- Ikon dan chart ditulis SVG inline. Jangan menambah library ikon/chart.
-- Font Plus Jakarta Sans sudah dimuat di `src/app.html`.
-- Seluruh teks UI berbahasa Indonesia.
-- Layout harus tetap bekerja di mobile: tabel lebar memakai `overflow-x-auto`,
-  sidebar menjadi drawer.
+- Flat design: no gradients, no `shadow-*`, max radius `rounded-lg`.
+- Icons and charts are inline SVG. Do not add icon or chart libraries.
+- Plus Jakarta Sans is loaded in `src/app.html`.
+- All UI copy is English. Rupiah keeps the `Rp` prefix and Indonesian digit
+  grouping (`toLocaleString('id-ID')`); dates use English month names.
+- Layout must work on mobile: wide tables use `overflow-x-auto`, the sidebar
+  becomes a drawer.
 
-## Aksesibilitas
+## Accessibility
 
-- Setiap tombol ikon butuh `aria-label`.
-- Dropdown: `aria-haspopup`, `aria-expanded`, tutup dengan Escape dan klik luar.
-- Paginasi aktif: `aria-current="page"`.
-- Item navigasi tanpa halaman dirender `<button>`, bukan `<a href="#">`.
-- Jangan menghapus indikator fokus tanpa pengganti yang jelas.
+- Every icon-only button needs an `aria-label`.
+- Dropdowns: `aria-haspopup`, `aria-expanded`, close on Escape and outside click.
+- Active pagination page: `aria-current="page"`.
+- Nav items without a page render as `<button>`, not `<a href="#">`.
+- Do not remove focus indicators without a clear replacement.
 
 ## Testing
 
-- Setiap logika baru non-trivial butuh test.
-- Test colocated: `Nama.test.ts` di samping `Nama.svelte`.
-- Query memakai role/label, bukan selector class.
-- `expect.requireAssertions` aktif: test tanpa assertion gagal.
-- Bug fix: tulis test yang gagal dulu, lalu perbaiki.
-- Sebelum selesai: `npm test` dan `npm run check` harus lulus.
+- Every new non-trivial logic branch needs a test.
+- Tests are colocated: `Name.test.ts` next to `Name.svelte`.
+- Query by role/label, not class selectors.
+- `expect.requireAssertions` is on: a test without assertions fails.
+- Bug fix: write the failing test first, then fix.
+- `src/lib/server/**` is excluded from Vitest in `vite.config.ts`. Keep the store
+  thin and put the rules in `utils` where they can be tested.
+- Before finishing: `npm test` and `npm run check` must pass.
 
-## Batasan yang harus dipertahankan
+## Boundaries to preserve
 
-- Auth adalah simulasi memori (`src/lib/stores/auth.ts`). Komentar `shortcut:`
-  di sana menjelaskan batasnya; jangan menghapusnya tanpa mengganti auth dengan
-  sesi server.
-- Data mock boleh berubah, tetapi tanggal member harus tetap relatif
-  (`isoDaysAgo`) agar filter 7/30/90 hari tidak kosong.
-- Menu Produk, Pesanan, Laporan sengaja belum punya halaman.
-- Belum ada adapter produksi. Jangan mengklaim siap deploy.
+- Auth is an in-memory simulation (`src/lib/stores/auth.ts`). The `shortcut:`
+  comment there explains the limit; do not remove it unless auth is replaced by a
+  server session.
+- The API is a dummy: in-memory, unauthenticated, resets on restart. Do not
+  present it as a backend.
+- Menu items Products, Orders, and Reports intentionally have no pages.
+- There is no production adapter. Do not claim the app is deploy-ready.
 
-## Jangan
+## Don't
 
-- Jangan menambah dependensi untuk hal yang bisa diselesaikan API platform.
-- Jangan mengubah `package.json`/`tsconfig.json` tanpa alasan yang jelas.
-- Jangan menulis komentar yang mengulang isi kode.
-- Jangan memformat ulang file yang tidak terkait perubahan.
-- Jangan commit rahasia, token, atau file `.env`.
+- Don't add a dependency for something a platform API already does.
+- Don't change `package.json` / `tsconfig.json` without a clear reason.
+- Don't write comments that restate the code.
+- Don't reformat files unrelated to the change.
+- Don't commit secrets, tokens, or `.env` files.

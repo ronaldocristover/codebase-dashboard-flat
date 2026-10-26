@@ -1,100 +1,129 @@
 # TokoKu Dashboard — Context
 
-Dokumen ini konteks proyek untuk manusia dan agent. Untuk arsitektur detail, lihat
-[`SYSTEM-DESIGN.md`](./SYSTEM-DESIGN.md). Untuk aturan menulis kode, lihat
-[`AGENTS.md`](../AGENTS.md) dan [`svelte-best-practices.md`](./svelte-best-practices.md).
+Project context for humans and agents. For detailed architecture see
+[`SYSTEM-DESIGN.md`](./SYSTEM-DESIGN.md). For coding rules see
+[`AGENTS.md`](../AGENTS.md) and
+[`svelte-best-practices.md`](./svelte-best-practices.md).
 
-## Apa ini
+## What this is
 
-Dashboard admin toko online fiktif **TokoKu**. Demo UI, bukan produk produksi.
-Semua data mock, tidak ada backend, tidak ada API.
+**TokoKu** is an admin dashboard for a fictional online store. It is a UI demo,
+not a production product. Sample data is served by a dummy in-memory API: no
+database, no external backend, no persistence.
 
-Status: selesai dan terverifikasi.
-
-- `npm test` → 12 file, 65 test lulus
-- `npm run check` → 0 error, 0 warning
-- `npm run build` → sukses (dengan peringatan `adapter-auto`)
-- `/`, `/member`, `/login` → 200
+Status: feature work is complete for the demo scope — login, dashboard, member
+list, and member create/detail/edit. Verify with the commands below rather than
+trusting this line.
 
 ## Stack
 
-| Bagian | Pilihan |
+| Area | Choice |
 | --- | --- |
 | Framework | SvelteKit 3, Svelte 5 (runes), TypeScript |
 | Build | Vite 8 |
-| Styling | Tailwind CSS v4 (`@theme` tokens, tanpa config file) |
+| Styling | Tailwind CSS v4 (`@theme` tokens, no config file) |
 | Test | Vitest 4 + jsdom + `@testing-library/svelte` |
-| Ikon/chart | SVG inline. Tidak ada library ikon atau chart. |
+| Icons/charts | Inline SVG. No icon or chart library. |
 | Font | Plus Jakarta Sans (Google Fonts, `src/app.html`) |
-| Adapter | `adapter-auto` (belum ada target deploy) |
+| Adapter | `adapter-auto` (no deploy target yet) |
 
-## Perintah
+## Commands
 
 ```sh
-npm run dev                 # dev server
-npm run dev -- --port 5174  # port lain
-npm test                    # seluruh test (sekali jalan)
+npm run dev                 # dev server (5173, or 5174 when busy)
+npm run dev -- --port 5174  # another port
+npm test                    # all tests, single run
 npm run test:unit           # vitest watch
 npm run check               # svelte-check + sync
-npm run build               # build produksi
-npm run preview             # preview hasil build
+npm run build               # production build
+npm run preview             # preview the build
 ```
 
-Jangan matikan dev server dengan `pkill -f "vite dev --port 5174"` dari shell yang
-sama — pola itu cocok dengan command line shell itu sendiri dan ikut membunuhnya.
-Pakai `kill $(lsof -t -i:5174)`.
+Do not kill the dev server with `pkill -f "vite dev"` from the same shell — the
+pattern also matches that shell's own command line and kills it. Use
+`kill $(lsof -t -i:5174)`, with the port the server is actually on.
 
-## Peta direktori
+## Directory map
 
 ```
 src/
-  app.html                     font, <html lang="id">, judul
+  app.html                     font, <html lang="en">, title
   lib/
-    components/                komponen UI + test colocated
-    mock/                      data contoh (members, dashboard)
+    components/                UI components + colocated tests
+    mock/                      sample data (members, orders, dashboard)
+    server/                    server-only modules (in-memory member store)
     stores/                    auth + UI state (in-memory)
-    utils/                     format + filter/sort/paginate (pure)
-    types.ts                   tipe domain
+    utils/                     format, validation, filter/sort/paginate (pure)
+    types.ts                   domain types
   routes/
     layout.css                 @theme design tokens + body
     +layout.svelte             root (favicon)
-    login/                     halaman login
+    login/                     login page
+    api/members/
+      +server.ts               GET, POST   /api/members
+      [id]/+server.ts          GET, PATCH  /api/members/[id]
+      [id]/orders/+server.ts   GET        /api/members/[id]/orders
     (dashboard)/               shell: sidebar + top nav
       +layout.ts               guard (ssr = false)
       +layout.svelte           shell
-      +error.svelte            404 yang tetap memakai shell
+      +error.svelte            404 that keeps the shell
       +page.svelte             dashboard
-      member/+page.svelte      tabel member
+      member/+page.ts          loads the member list from the API
+      member/+page.svelte      member table
+      member/new/+page.svelte  create member
+      member/[id]/+page.ts     loads member + orders
+      member/[id]/+page.svelte member detail
+      member/[id]/edit/+page.ts         loads member for editing
+      member/[id]/edit/+page.svelte     edit form
 ```
 
-## Konvensi inti
+## Core conventions
 
-- Import internal memakai `#lib/*` (`$lib` dihapus di SvelteKit 3).
-- Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`. Tidak ada `export let`,
-  `$:`, `on:click`, atau slot.
-- Logika non-UI berupa fungsi murni di `src/lib/utils/` dan diuji terpisah.
-- Komponen menerima props bertipe; tidak ada store global untuk state halaman.
-- Teks UI berbahasa Indonesia; identifier kode berbahasa Indonesia bila domainnya
-  Indonesia (`bergabung`, `totalBelanja`, `anggota`), selain itu Inggris.
-- Tailwind utility langsung di markup. Warna dari token `@theme`, bukan hex bebas.
-- Flat design: tanpa gradient, tanpa shadow, tanpa sudut besar.
+- Internal imports use `#lib/*` (`$lib` was removed in SvelteKit 3).
+- Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`. No `export let`,
+  `$:`, `on:click`, or slots.
+- Non-UI logic is pure functions in `src/lib/utils/` and tested separately.
+  Member field rules live in `memberValidation.ts` so the API and the forms
+  share them.
+- `src/lib/server/` is server-only. Only `+server.ts` files import it; pages get
+  data through `fetch` in `+page.ts`.
+- Components take typed props; no global store for page state. Stores are
+  reserved for login status and sidebar/drawer state.
+- UI copy is English. Currency keeps `Rp` plus Indonesian digit grouping
+  (`toLocaleString('id-ID')`); dates use English month names.
+- Tailwind utilities directly in markup. Colors come from `@theme` tokens, not
+  raw hex.
+- Flat design: no gradients, no shadows, no large radii.
 
-## Batasan yang disengaja
+## Deliberate limits
 
-- **Auth palsu.** `src/lib/stores/auth.ts` menerima email valid + password non-kosong,
-  disimpan di memori. Refresh = logout. Guard hanya UX, bukan keamanan.
-- **Data mock.** Tanggal member dibuat relatif terhadap hari ini (`isoDaysAgo`) supaya
-  filter 7/30/90 hari tidak pernah kosong.
-- **Menu mati.** Produk, Pesanan, dan Laporan sengaja belum punya halaman; dirender
-  sebagai tombol non-navigasi. Route tak dikenal memakai `(dashboard)/+error.svelte`.
-- **Tanpa adapter produksi.** Build sukses tetapi tidak siap deploy.
+- **Mock auth.** `src/lib/stores/auth.ts` accepts any valid email plus a non-empty
+  password, held in memory. Refresh logs you out. The guard is UX, not security.
+- **Dummy API.** `src/lib/server/memberStore.ts` keeps members in module-level
+  arrays seeded from `src/lib/mock/members.ts`; orders are generated in
+  `src/lib/mock/orders.ts`. Create and edit calls work until the server restarts,
+  then reset. Endpoints are unauthenticated.
+- **Mock data.** Member dates are relative to today (`isoDaysAgo`) so the
+  7/30/90-day filters never come up empty.
+- **Dead menu.** Products, Orders, and Reports have no pages; they render as
+  non-navigating buttons. Unknown routes use `(dashboard)/+error.svelte`.
+- **No production adapter.** The build succeeds but the app is not ready to
+  deploy.
 
-## Riwayat keputusan
+## Decision history
 
-- SvelteKit 3 (bukan 2) karena itu yang dihasilkan `sv create` saat proyek dibuat.
-- Test pindah dari mode browser Playwright ke jsdom karena Playwright tidak tersedia
-  di mesin ini.
-- `resolve.conditions: ['browser']` hanya aktif saat `VITEST`, supaya
-  `@testing-library/svelte` me-mount versi browser Svelte, bukan versi server.
-- State sidebar sengaja di store modul, bukan `localStorage`: reset tiap refresh.
-- Guard di `(dashboard)/+layout.ts` dengan `ssr = false`; shell tidak dirender server.
+- SvelteKit 3 (not 2) because that is what `sv create` generated when the project
+  started.
+- Tests moved from Playwright browser mode to jsdom because Playwright is not
+  available on this machine.
+- `resolve.conditions: ['browser']` is active only under `VITEST`, so
+  `@testing-library/svelte` mounts the browser build of Svelte instead of the
+  server build.
+- `src/lib/server/**` is excluded from the Vitest `include` list; store logic
+  stays thin and testable rules sit in `utils`.
+- Sidebar state lives in a module store, not `localStorage`: it resets on every
+  refresh.
+- The guard is in `(dashboard)/+layout.ts` with `ssr = false`; the shell is not
+  rendered on the server.
+- Member pages were added on top of the dummy API rather than a real backend, to
+  keep the repo dependency-free and runnable offline.

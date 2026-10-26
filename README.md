@@ -1,56 +1,76 @@
 # TokoKu Dashboard
 
-Dashboard admin toko online fiktif dengan desain flat. Dibangun dengan SvelteKit 3,
-Svelte 5 (runes), TypeScript, dan Tailwind CSS v4. Semua data mock — tanpa backend,
-tanpa API.
+Admin dashboard for a fictional online store, built with a flat design. SvelteKit
+3, Svelte 5 (runes), TypeScript, and Tailwind CSS v4. Data comes from a dummy
+in-memory API — no database, no real backend.
 
-## Menjalankan
+## Quick start
 
 ```sh
 npm install
 npm run dev
 ```
 
-Buka `http://localhost:5173`. Login menerima email valid apa pun dengan kata sandi
-non-kosong (mis. `rina@tokoku.id` / `rahasia`). Sesi disimpan di memori, jadi refresh
-berarti logout.
+Open `http://localhost:5173` (Vite moves to `5174` if the port is busy). Login
+accepts any valid email with a non-empty password, for example
+`rina@tokoku.id` / `rahasia`. The session lives in memory, so a refresh logs you
+out.
 
-## Perintah
+## Commands
 
 ```sh
-npm test          # seluruh test
+npm test          # all tests
 npm run test:unit # vitest watch
 npm run check     # svelte-check
-npm run build     # build produksi
-npm run preview   # preview hasil build
+npm run build     # production build
+npm run preview   # preview the build
 ```
 
-## Isi
+## Features
 
-- `/login` — form masuk dengan panel branding
-- `/` — stat card, tren penjualan, pesanan 7 hari, pesanan terbaru
-- `/member` — tabel member dengan pencarian, filter status/tanggal, sort, paginasi
-- Sidebar responsif (drawer di mobile), dropdown avatar dengan logout
+- `/login` — sign-in form with a branding panel
+- `/` — stat cards, sales trend, 7-day orders, latest orders
+- `/member` — member table with search, status/date filters, sorting, pagination
+- `/member/new` — create a member
+- `/member/[id]` — member detail with that member's orders
+- `/member/[id]/edit` — edit an existing member
+- Responsive sidebar (drawer on mobile), avatar dropdown with logout
 
-## Struktur
+## API
+
+Reads and writes go through route handlers backed by
+`src/lib/server/memberStore.ts` (members, in memory) and
+`src/lib/mock/orders.ts` (sample orders per member). Changes survive navigation
+but not a server restart.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/members` | List members |
+| `POST` | `/api/members` | Create a member |
+| `GET` | `/api/members/[id]` | Read one member |
+| `PATCH` | `/api/members/[id]` | Update a member |
+| `GET` | `/api/members/[id]/orders` | Orders for one member |
+
+## Structure
 
 ```
-src/lib/components/   komponen UI + test colocated
-src/lib/mock/         data contoh
-src/lib/stores/       auth dan state UI (in-memory)
-src/lib/utils/        format, filter, sort, paginasi (fungsi murni)
-src/routes/           halaman, shell dashboard, guard
+src/lib/components/   UI components + colocated tests
+src/lib/mock/         sample data (members, orders, dashboard)
+src/lib/server/       server-only modules (in-memory member store)
+src/lib/stores/       auth and UI state (in-memory)
+src/lib/utils/        format, validation, filter, sort, pagination (pure)
+src/routes/           pages, dashboard shell, guard, API routes
 ```
 
-## Dokumentasi
+## Documentation
 
-- [Konteks proyek](docs/CONTEXT.md)
+- [Project context](docs/CONTEXT.md)
 - [System design](docs/SYSTEM-DESIGN.md)
-- [Best practices Svelte 5 & SvelteKit 3](docs/svelte-best-practices.md)
-- [Aturan agent](AGENTS.md)
+- [Svelte 5 & SvelteKit 3 best practices](docs/svelte-best-practices.md)
+- [Agent rules](AGENTS.md)
 
-## Batasan
+## Limitations
 
-Demo UI, bukan produk produksi. Auth hanya simulasi di memori dan guard berjalan di
-klien. Menu Produk, Pesanan, dan Laporan belum punya halaman. Belum ada adapter
-deploy.
+A UI demo, not a production product. Auth is simulated in memory and the guard
+runs on the client. The API is unauthenticated and loses data on restart.
+Products, Orders, and Reports have no pages. No deploy adapter is configured.

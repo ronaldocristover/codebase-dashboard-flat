@@ -1,14 +1,14 @@
-# Best Practices — Svelte 5 dan SvelteKit 3
+# Best Practices — Svelte 5 and SvelteKit 3
 
-Aturan di dokumen ini diturunkan dari dokumentasi resmi (lihat
-[Sumber](#sumber)) dan dari pola yang sudah dipakai di repo ini. Setiap aturan
-disertai contoh nyata di repo, supaya agent tidak mengarang API.
+The rules in this document come from the official documentation (see
+[Sources](#sources)) and from patterns already used in this repo. Every rule is
+paired with a real example, so agents do not invent APIs.
 
-Versi proyek: Svelte `^5.57`, SvelteKit `^3.0`, Vite `^8`, Tailwind `^4`.
+Project versions: Svelte `^5.57`, SvelteKit `^3.0`, Vite `^8`, Tailwind `^4`.
 
-## 1. Runes wajib
+## 1. Runes are mandatory
 
-Runes mode dipaksa untuk seluruh kode proyek di `vite.config.ts`:
+Runes mode is forced for all project code in `vite.config.ts`:
 
 ```ts
 sveltekit({
@@ -19,27 +19,31 @@ sveltekit({
 });
 ```
 
-Konsekuensinya, pola Svelte 4 berikut **tidak boleh** muncul:
+As a result, the following Svelte 4 patterns **must not** appear:
 
-| Jangan | Pakai |
+| Don't | Use |
 | --- | --- |
 | `export let nama` | `let { nama } = $props()` |
 | `$: harga = qty * unit` | `const harga = $derived(qty * unit)` |
 | `on:click={...}` | `onclick={...}` |
 | `<slot />` | `{@render children()}` |
-| `$: { ... }` untuk efek samping | `$effect(() => { ... })` |
+| `$: { ... }` for side effects | `$effect(() => { ... })` |
 | `$app/stores` | `$app/state` |
 | `$app/environment` | `$app/env` |
 | `$env/static/*`, `$env/dynamic/*` | `src/env.ts` + `$app/env/public` / `$app/env/private` |
 
-## 2. `$state` untuk data yang berubah
+## 2. `$state` for changing data
 
-`$state` membuat nilai reaktif. Objek dan array dibungkus proxy, jadi mutasi
-bersarang ikut terdeteksi.
+`$state` makes a value reactive. Objects and arrays are wrapped in proxies, so
+nested mutations are tracked too.
 
-Contoh repo — `src/routes/(dashboard)/member/+page.svelte`:
+Repo example — `src/routes/(dashboard)/member/+page.svelte`:
 
 ```ts
+import type { PageData } from './$types';
+
+let { data }: { data: PageData } = $props();
+
 let query = $state('');
 let statusFilter = $state<'semua' | MemberStatus>('semua');
 let rentang = $state<'semua' | 7 | 30 | 90>('semua');
@@ -48,31 +52,36 @@ let sortKey = $state<SortKey>('bergabung');
 let sortDir = $state<SortDir>('desc');
 ```
 
-Aturan:
+The list receives its rows from `+page.ts` through `data.members`; it does not
+import mock data or the server store.
 
-- Beri tipe generik saat nilai awal tidak mewakili seluruh domain
+Rules:
+
+- Give a generic type when the initial value does not cover the whole domain
   (`$state<'semua' | 7 | 30 | 90>('semua')`).
-- Jangan menaruh data besar yang tidak pernah dimutasi di `$state`; gunakan
-  `$state.raw` atau konstanta biasa.
-- State halaman tetap lokal di komponen halaman. Naikkan ke store hanya bila
-  benar-benar dipakai lintas komponen.
+- Do not put large never-mutated data in `$state`; use `$state.raw` or a plain
+  constant.
+- Keep page state local to the page component. Lift it into a store only when it
+  is genuinely shared across components.
+- Form fields and their error map are page-local `$state` too; do not mirror them
+  into a global store.
 
-## 3. `$derived` untuk nilai turunan, bukan `$effect`
+## 3. `$derived` for derived values, not `$effect`
 
-`$derived` menghitung nilai dari nilai lain dan tidak punya efek samping. Ini
-pilihan pertama setiap kali ada "nilai B dihitung dari nilai A".
+`$derived` computes a value from other values and has no side effects. It is the
+first choice whenever "value B is computed from value A".
 
-Contoh repo — pipeline tabel member:
+Repo example — the member table pipeline:
 
 ```ts
 const terfilter = $derived(
-	filterMembers(members, { query, status: statusFilter, joinedWithin: rentang }, sekarang)
+	filterMembers(data.members, { query, status: statusFilter, joinedWithin: rentang }, sekarang)
 );
 const terurut = $derived(sortMembers(terfilter, sortKey, sortDir));
 const halaman = $derived(paginate(terurut, page, PER_HALAMAN));
 ```
 
-Untuk perhitungan multi-baris, pakai `$derived.by` — contoh di
+For multi-line computations use `$derived.by` — example from
 `src/lib/components/Pagination.svelte`:
 
 ```ts
@@ -84,15 +93,15 @@ const nomor = $derived.by(() => {
 });
 ```
 
-Jangan menyalin hasil turunan ke `$state` lewat `$effect`; itu membuat dua sumber
-kebenaran dan satu render tambahan.
+Do not copy a derived result into `$state` through `$effect`; that creates two
+sources of truth and an extra render.
 
-## 4. `$effect` hanya untuk efek samping
+## 4. `$effect` only for side effects
 
-`$effect` dipakai untuk menyentuh dunia luar: DOM listener, `document.body`,
-timer, API browser. Selalu kembalikan cleanup.
+`$effect` is for touching the outside world: DOM listeners, `document.body`,
+timers, browser APIs. Always return cleanup.
 
-Contoh repo — `src/lib/components/UserMenu.svelte`:
+Repo example — `src/lib/components/UserMenu.svelte`:
 
 ```ts
 $effect(() => {
@@ -115,19 +124,19 @@ $effect(() => {
 });
 ```
 
-Aturan:
+Rules:
 
-- Baca dependency di dalam effect supaya pelacakan otomatis benar. Nilai yang
-  dibaca di dalam `if` yang tidak jalan tidak menjadi dependency.
-- Jangan memakai `$effect` untuk menurunkan nilai, mengubah state lain, atau
-  menyinkronkan props.
-- Efek yang butuh nilai tanpa melacaknya: `untrack(() => ...)` dari `svelte`.
-- Efek yang hanya boleh jalan sekali saat mount: `onMount` lebih jelas maksudnya.
-- Listener global di komponen yang sering di-mount/unmount wajib punya cleanup.
+- Read dependencies inside the effect so tracking is automatic. A value read
+  inside an `if` branch that does not run is not a dependency.
+- Do not use `$effect` to derive values, mutate other state, or sync props.
+- To read a value without tracking it, use `untrack(() => ...)` from `svelte`.
+- For work that should run only once on mount, `onMount` states the intent more
+  clearly.
+- Global listeners in components that mount and unmount often must have cleanup.
 
-## 5. Props bertipe dan `$bindable`
+## 5. Typed props and `$bindable`
 
-Semua komponen menerima props lewat `$props()` dengan tipe eksplisit.
+Every component receives props through `$props()` with explicit types.
 
 ```svelte
 <script lang="ts">
@@ -135,10 +144,10 @@ Semua komponen menerima props lewat `$props()` dengan tipe eksplisit.
 </script>
 ```
 
-- Default value ditulis di destrukturisasi: `let { size = 'md' } = $props()`.
-- Anak tidak boleh memutasi props. Bila anak perlu mengubah nilai milik induk,
-  pilihan pertama adalah callback (`onPageChange` di `Pagination.svelte`).
-- `$bindable()` hanya bila dua arah memang diperlukan:
+- Write defaults in the destructuring: `let { size = 'md' } = $props()`.
+- Children must not mutate props. When a child needs to change a parent value,
+  the first choice is a callback (`onPageChange` in `Pagination.svelte`).
+- Use `$bindable()` only when two-way binding is genuinely needed:
 
 ```svelte
 <script lang="ts">
@@ -146,12 +155,12 @@ Semua komponen menerima props lewat `$props()` dengan tipe eksplisit.
 </script>
 ```
 
-Repo ini belum memakai `$bindable`; pertahankan pola callback agar aliran data
-tetap satu arah.
+This repo does not use `$bindable`; keep the callback pattern so data flows one
+way.
 
-## 6. Snippets menggantikan slot
+## 6. Snippets replace slots
 
-Layout dashboard memakai children snippet:
+The dashboard layout uses a children snippet:
 
 ```svelte
 <script lang="ts">
@@ -162,7 +171,7 @@ Layout dashboard memakai children snippet:
 <main>{@render children()}</main>
 ```
 
-Snippet bernama bisa menjadi prop implisit:
+Named snippets can act as implicit props:
 
 ```svelte
 <Table data={fruits}>
@@ -171,84 +180,91 @@ Snippet bernama bisa menjadi prop implisit:
 </Table>
 ```
 
-Jangan mencampur `<slot />` dengan snippet. Snippet yang butuh parameter
-dideklarasikan dengan parameter, bukan lewat slot props.
+Do not mix `<slot />` with snippets. A snippet that needs parameters declares
+them; it does not use slot props.
 
-## 7. State modul dan kebocoran SSR
+## 7. Module state and SSR leakage
 
-Store di `src/lib/stores/` adalah singleton modul — dibuat sekali per proses.
-Di server, singleton dipakai bersama antarrequest, sehingga state pengguna bisa
-bocor ke pengguna lain.
+Stores in `src/lib/stores/` are module singletons — created once per process. On
+the server, a singleton is shared across requests, so user state could leak to
+another user.
 
-Repo ini aman karena `src/routes/(dashboard)/+layout.ts` menetapkan `ssr = false`
-untuk seluruh area dashboard. **Jangan hapus `ssr = false` selama auth masih
-disimpan di store memori.**
+This repo is safe because `src/routes/(dashboard)/+layout.ts` sets `ssr = false`
+for the whole dashboard area. **Do not remove `ssr = false` while auth still lives
+in the in-memory store.**
 
-Aturan:
+Rules:
 
-- State per pengguna/request harus berasal dari `load` (server) atau cookie, bukan
-  dari variabel modul.
-- State UI murni (sidebar, drawer) boleh di modul selama area tersebut
+- Per-user/per-request state must come from `load` (server) or a cookie, not from
+  a module variable.
+- Pure UI state (sidebar, drawer) may live in a module as long as that area is
   client-only.
-- Bila nanti SSR diaktifkan, pindahkan auth ke `hooks.server.ts` + `event.locals`
-  dan kirim datanya lewat `load`.
-- Store `writable` tetap kompatibel dengan runes: `$sidebarCollapsed` di
-  `Sidebar.svelte` adalah auto-subscription. Jangan menulis `get(store)` di
-  markup; itu mematikan reaktivitas.
+- If SSR is enabled later, move auth to `hooks.server.ts` + `event.locals` and
+  pass it through `load`.
+- `writable` stores still work with runes: `$sidebarCollapsed` in `Sidebar.svelte`
+  is auto-subscription. Do not write `get(store)` in markup; it disables
+  reactivity.
 
-## 8. SvelteKit 3: import `#lib`, bukan `$lib`
+`src/lib/server/memberStore.ts` is a module singleton too, shared by every
+request. That is intentional for this dummy API but makes the data global,
+unauthenticated, and lost on restart. `#lib/server/*` must never be imported from
+components, pages, or `+page.ts`; only `+server.ts` files and tests reach it.
 
-SvelteKit 3 memakai alias `#lib`. Di repo ini alias hanya dipetakan untuk
-subpath, bukan bare `#lib`:
+## 8. SvelteKit 3: import `#lib`, not `$lib`
+
+SvelteKit 3 uses the `#lib` alias. In this repo the alias is mapped only for
+subpaths, not for bare `#lib`:
 
 - `package.json` → `"imports": { "#lib/*": "./src/lib/*" }`
 - `tsconfig.json` → `paths: { "#lib/*": ["./src/lib/*"] }`
 
-Bare `#lib` sengaja tidak dipetakan karena tidak ada yang mengimpornya dan
-`src/lib/index.ts` bukan API publik.
+Bare `#lib` is deliberately not mapped because nothing imports it and
+`src/lib/index.ts` is not a public API.
 
-Contoh pemakaian:
+Examples:
 
 ```ts
 import { auth } from '#lib/stores/auth';
 import { filterMembers } from '#lib/utils/memberFilters';
+import { findMember } from '#lib/server/memberStore'; // +server.ts only
 ```
 
-Aturan:
+Rules:
 
-- Import internal selalu `#lib/...`; jangan menulis `../../lib/...`.
-- Tambahkan export di `src/lib/index.ts` hanya bila memang bagian dari API
-  publik library. Saat ini file itu hanya berisi komentar; impor langsung per
-  modul lebih jelas.
-- `$lib` adalah alias lama; jangan dipakai di kode baru.
+- Internal imports always use `#lib/...`; never write `../../lib/...`.
+- Add an export to `src/lib/index.ts` only when it is part of the library's public
+  API. Today the file contains comments only; direct per-module imports are
+  clearer.
+- `$lib` is the old alias; do not use it in new code.
+- `#lib/server/*` is server-only. Importing it from client-reachable code breaks
+  the build or leaks server data.
 
-## 9. `$app/state` menggantikan `$app/stores`
+## 9. `$app/state` replaces `$app/stores`
 
-`page`, `navigating`, dan `updated` sekarang diimpor dari `$app/state` dan sudah
-reaktif dengan runes. Jangan menulis `$page`.
+`page`, `navigating`, and `updated` are now imported from `$app/state` and are
+already reactive with runes. Do not write `$page`.
 
-Contoh repo — `src/routes/(dashboard)/+layout.svelte`:
+Repo example — `src/routes/(dashboard)/+layout.svelte`:
 
 ```ts
 import { page } from '$app/state';
 
-const judul = $derived(page.url.pathname.startsWith('/member') ? 'Member' : 'Dashboard');
+const judul = $derived(page.url.pathname.startsWith('/member') ? 'Members' : 'Dashboard');
 ```
 
-`Sidebar.svelte` juga memakai `page.url.pathname` untuk menentukan item aktif.
+`Sidebar.svelte` also reads `page.url.pathname` to mark the active item.
 
-Aturan:
+Rules:
 
-- Bungkus pembacaan `page.*` di `$derived` bila nilainya berubah antar navigasi;
-  `$:` tidak akan memperbaruinya.
-- `page.error` tersedia untuk menampilkan error; `+error.svelte` memakai
-  `page.status`.
-- `page.data` berisi gabungan hasil `load`; jangan menyalinnya ke store.
+- Wrap `page.*` reads in `$derived` when the value changes between navigations;
+  `$:` will not update it.
+- `page.error` is available for error UI; `+error.svelte` uses `page.status`.
+- `page.data` holds the merged `load` results; do not copy it into a store.
 
-## 10. Route group, guard, dan redirect
+## 10. Route groups, guards, and redirects
 
-Struktur `src/routes/(dashboard)/` mengelompokkan halaman yang berbagi shell tanpa
-mengubah URL. Guard ada di `+layout.ts`:
+The `src/routes/(dashboard)/` structure groups pages that share a shell without
+changing the URL. The guard lives in `+layout.ts`:
 
 ```ts
 import { redirect } from '@sveltejs/kit';
@@ -264,35 +280,138 @@ export function load() {
 }
 ```
 
-Aturan:
+Rules:
 
-- `redirect()` dari `@sveltejs/kit` dilempar, bukan `return`; jangan menangkapnya
-  dengan `try/catch` kosong.
-- Gunakan status `303` untuk redirect setelah perubahan state.
-- Guard di `load` universal hanya UX. Otorisasi nyata harus di server
-  (`hooks.server.ts` atau `+page.server.ts`) karena kode klien bisa dilewati.
-- Halaman yang butuh shell dan 404 kustom menaruh `+error.svelte` di dalam grup,
-  seperti `(dashboard)/+error.svelte`.
-- `export const ssr = false` dipasang di layout yang paling dekat dengan
-  kebutuhan, bukan di root, supaya halaman publik tetap bisa dirender server.
+- `redirect()` from `@sveltejs/kit` is thrown, not returned; do not swallow it
+  with an empty `try/catch`.
+- Use status `303` for redirects after a state change.
+- A guard in a universal `load` is UX only. Real authorization belongs on the
+  server (`hooks.server.ts` or `+page.server.ts`) because client code can be
+  bypassed.
+- Pages that need the shell and a custom 404 put `+error.svelte` inside the group,
+  such as `(dashboard)/+error.svelte`.
+- Put `export const ssr = false` on the layout closest to the need, not at the
+  root, so public pages can still render on the server.
 
-## 11. Load dan form actions
+## 11. Data loading for member pages
 
-Repo ini belum memakai `load` untuk data karena semua data mock. Pola yang benar
-saat data nyata ditambahkan:
+Pages read the dummy API through a universal `+page.ts` load and the `fetch`
+provided by SvelteKit. Repo example — `src/routes/(dashboard)/member/+page.ts`:
 
 ```ts
-// +page.server.ts
-export async function load({ fetch }) {
+import type { PageLoad } from './$types';
+import type { Member } from '#lib/types';
+
+export const load: PageLoad = async ({ fetch }) => {
 	const res = await fetch('/api/members');
-	return { members: await res.json() };
-}
+	const members = (await res.json()) as Member[];
+
+	return { members };
+};
 ```
 
-- `+page.ts` untuk load universal (jalan di server saat SSR, lalu di klien saat
-  navigasi); `+page.server.ts` untuk akses database/rahasia.
-- Kembalikan data mentah yang serializable; jangan mengembalikan class atau fungsi.
-- Form mutasi memakai actions + `use:enhance` agar tetap bekerja tanpa JavaScript:
+The page takes the result as `data`:
+
+```svelte
+<script lang="ts">
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+</script>
+```
+
+The detail page loads two independent resources in parallel and turns a missing
+member into a real 404:
+
+```ts
+import { error } from '@sveltejs/kit';
+import type { PageLoad } from './$types';
+
+export const load: PageLoad = async ({ fetch, params }) => {
+	const [memberRes, ordersRes] = await Promise.all([
+		fetch(`/api/members/${params.id}`),
+		fetch(`/api/members/${params.id}/orders`)
+	]);
+	if (memberRes.status === 404) error(404, 'Member not found');
+
+	return {
+		member: await memberRes.json(),
+		orders: await ordersRes.json()
+	};
+};
+```
+
+The edit page loads only the member and throws the same `error(404)` when the API
+returns 404.
+
+Rules:
+
+- `+page.ts` is a universal load (runs on the server during SSR, then in the
+  browser on navigation); `+page.server.ts` is for database or secret access. The
+  dummy API needs only `+page.ts`.
+- Always use the provided `fetch`, so relative URLs and cookies work in both
+  environments.
+- Never import `#lib/server/*` from `+page.ts`; go through the API.
+- Return serializable data only. No classes or functions.
+- Throw `error(404, ...)` for a missing member; the nearest `+error.svelte`
+  renders the message inside the dashboard shell.
+- Use `Promise.all` for independent requests in one load.
+- A universal load reruns on navigation, so create/edit changes are visible when
+  navigating back to the list or detail page.
+
+## 12. Forms and mutations
+
+Member create and edit are client-side forms that talk to the API. Form state is
+local and field errors come from the server response:
+
+```svelte
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+
+	let nama = $state(data.member.nama);
+	let errors = $state<Record<string, string>>({});
+
+	async function onSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		const res = await fetch(`/api/members/${data.member.id}`, {
+			method: 'PATCH',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ nama })
+		});
+
+		if (res.status === 400) {
+			errors = (await res.json()).errors;
+			return;
+		}
+		await goto(`/member/${data.member.id}`);
+	}
+</script>
+
+<form onsubmit={onSubmit} novalidate>
+	<input bind:value={nama} name="nama" />
+	{#if errors.nama}<p role="alert">{errors.nama}</p>{/if}
+	<button type="submit">Save</button>
+</form>
+```
+
+Rules:
+
+- Keep every field and the error map in page-local `$state`. There is no global
+  store for form state.
+- The API returns `400` with `{ errors }` keyed by field name; assign that object
+  to the local error state instead of inventing messages in the page.
+- Validate on the server as well. `src/lib/utils/memberValidation.ts` is the one
+  rule set shared by API handlers and forms; do not duplicate field rules in
+  markup.
+- On success, navigate with `goto()` to the list or the member detail page.
+- Use `onsubmit` (runes event syntax) and `event.preventDefault()`; there is no
+  `on:submit`.
+
+If a form moves to SvelteKit form actions instead of the API, keep progressive
+enhancement and repeat validation on the server:
 
 ```svelte
 <script lang="ts">
@@ -301,15 +420,16 @@ export async function load({ fetch }) {
 
 <form method="POST" use:enhance>
 	<input name="nama" />
-	<button>Simpan</button>
+	<button>Save</button>
 </form>
 ```
 
-- Validasi selalu diulang di server. Validasi klien hanya untuk UX.
+Form actions are not used for the member pages today because the dummy API is
+the data source.
 
-## 12. Environment variables dan `defineEnvVars`
+## 13. Environment variables and `defineEnvVars`
 
-SvelteKit 3 memusatkan env di `src/env.ts` dengan `defineEnvVars` dari
+SvelteKit 3 centralises env in `src/env.ts` with `defineEnvVars` from
 `@sveltejs/kit/env`:
 
 ```ts
@@ -321,19 +441,19 @@ export const variables = defineEnvVars({
 });
 ```
 
-- `public: true` → boleh diimpor dari `$app/env/public` (ikut ke browser).
-- `public: false` (default) → hanya dari `$app/env/private`, yang server-only.
-- `schema` memvalidasi saat start; gagal cepat lebih baik daripada `undefined`
-  yang menjalar.
-- `static: true` meng-inline nilai saat build dan membuka dead-code elimination.
-- `$app/env` menyediakan `browser`, `building`, `dev`, `version` — pengganti
-  `$app/environment`.
-- Jangan pernah menaruh secret di `public: true` atau di `$app/env/public`.
-- Proyek ini belum punya env; tambahkan `src/env.ts` hanya saat ada variabel nyata.
+- `public: true` → may be imported from `$app/env/public` (ships to the browser).
+- `public: false` (default) → only from `$app/env/private`, which is server-only.
+- `schema` validates at startup; failing fast beats a spreading `undefined`.
+- `static: true` inlines the value at build time and enables dead-code
+  elimination.
+- `$app/env` provides `browser`, `building`, `dev`, and `version` — the replacement
+  for `$app/environment`.
+- Never put a secret in `public: true` or in `$app/env/public`.
+- This project has no env yet; add `src/env.ts` only when a real variable exists.
 
-## 13. Adapter dan build
+## 14. Adapter and build
 
-Di SvelteKit 3, adapter diberikan ke `sveltekit()` di `vite.config.ts`:
+In SvelteKit 3 the adapter is passed to `sveltekit()` in `vite.config.ts`:
 
 ```ts
 import adapter from '@sveltejs/adapter-auto';
@@ -344,88 +464,99 @@ export default defineConfig({
 });
 ```
 
-- `adapter-auto` hanya untuk platform yang dikenali; tanpa target deploy ia
-  memberi peringatan. Untuk produksi pilih `adapter-node`, `adapter-static`, atau
-  adapter platform.
-- `adapter-static` cocok untuk dashboard client-only, tetapi tidak menggantikan
-  auth server.
-- Build diverifikasi dengan `npm run build`, bukan hanya `npm run dev`.
+- `adapter-auto` only supports recognised platforms; without a deploy target it
+  prints a warning. For production choose `adapter-node`, `adapter-static`, or a
+  platform adapter.
+- `adapter-static` suits a client-only dashboard, but it does not replace server
+  auth.
+- Verify builds with `npm run build`, not only `npm run dev`.
 
-## 14. Tailwind v4 dan token
+## 15. Tailwind v4 and tokens
 
-- Token desain hanya di `src/routes/layout.css` dalam blok `@theme`. Jangan
-  menulis hex langsung di markup.
-- Warna dipakai lewat utility: `bg-primary`, `text-muted`, `border-line`,
+- Design tokens live only in `src/routes/layout.css` inside `@theme`. Never write
+  raw hex in markup.
+- Use colours through utilities: `bg-primary`, `text-muted`, `border-line`,
   `bg-success-bg`.
-- Tidak ada `tailwind.config.js`; konfigurasi berbasis CSS.
-- Flat design: tanpa `shadow-*`, tanpa `bg-gradient-*`, radius maksimum
-  `rounded-lg`.
-- Import CSS hanya sekali, di root layout (`src/routes/+layout.svelte`).
+- There is no `tailwind.config.js`; configuration is CSS-based.
+- Flat design: no `shadow-*`, no `bg-gradient-*`, maximum radius `rounded-lg`.
+- Import CSS once, in the root layout (`src/routes/+layout.svelte`).
 
-## 15. Aksesibilitas
+## 16. Accessibility
 
-Pola yang sudah dipakai dan harus dipertahankan:
+Patterns already in use and expected to stay:
 
-- Tombol ikon punya `aria-label` (toggle menu, panah paginasi).
-- Dropdown memakai `aria-haspopup`, `aria-expanded`, `role="menu"`, dan menutup
-  dengan Escape.
-- Halaman aktif paginasi memakai `aria-current="page"`.
-- Item navigasi yang tidak punya halaman dirender `<button>`, bukan `<a href="#">`.
-- Input filter punya `aria-label` karena label visualnya adalah placeholder.
-- Fokus terlihat: jangan hapus `outline` tanpa pengganti (`focus:border-primary`
-  saja belum cukup untuk semua kasus).
+- Icon-only buttons have an `aria-label` (menu toggle, pagination arrows).
+- Dropdowns use `aria-haspopup`, `aria-expanded`, `role="menu"`, and close on
+  Escape.
+- The active pagination page uses `aria-current="page"`.
+- Navigation items without a page render as `<button>`, not `<a href="#">`.
+- Filter inputs have an `aria-label` because their visual label is a placeholder.
+- Keep focus visible: do not remove `outline` without a clear replacement
+  (`focus:border-primary` alone is not enough in every case).
 
-Yang belum ada dan boleh ditambahkan saat menyentuh komponen terkait: focus trap
-untuk drawer mobile, `aria-describedby` + `role="alert"` untuk pesan error login,
-dan `aria-live` untuk hasil filter yang berubah.
+Still missing and fair game when touching the related component: a focus trap for
+the mobile drawer and `aria-live` for filter results that change.
 
-## 16. Pengujian
+Form field errors are rendered next to their field with `role="alert"`.
 
-- Logika non-UI diuji sebagai fungsi murni di `src/lib/utils/*.test.ts`. Teruskan
-  `now` sebagai parameter agar test tidak bergantung jam asli.
-- Komponen diuji dengan `@testing-library/svelte`; query memakai role/label, bukan
-  class CSS.
-- Test diletakkan colocated: `Pagination.test.ts` di sebelah `Pagination.svelte`.
-- `expect.requireAssertions: true` berarti setiap test wajib punya assertion.
-- `resolve.conditions: ['browser']` hanya saat `VITEST`; tanpa itu
-  `@testing-library/svelte` bisa memuat build server Svelte dan gagal mount.
-- Setiap bug fix dimulai dari test yang gagal (RED), lalu implementasi (GREEN).
-- Jalankan `npm test` dan `npm run check` sebelum commit.
+## 17. Testing
 
-## 17. Gaya kode proyek
+- Test non-UI logic as pure functions in `src/lib/utils/*.test.ts`. Pass `now` as
+  a parameter so tests do not depend on the real clock.
+- Validation rules are tested directly in `memberValidation.test.ts`; API
+  handlers and forms both rely on that module.
+- API contract tests use `// @vitest-environment node` at the top of the file,
+  import the exported handlers, and call them with a fake `RequestEvent`. Reset
+  the in-memory store in `beforeEach`, then assert status codes and body shapes.
+- `src/lib/server/**` is excluded from the Vitest `include` list. Keep the store
+  thin; put testable rules in `utils`.
+- Component and page tests use `@testing-library/svelte`; query by role/label, not
+  CSS classes. Page tests cover the loaded `data` input, not the API itself.
+- Tests are colocated: `Pagination.test.ts` next to `Pagination.svelte`.
+- `expect.requireAssertions: true` means every test must assert something.
+- `resolve.conditions: ['browser']` only under `VITEST`; without it
+  `@testing-library/svelte` may load the server build of Svelte and fail to mount.
+- Every bug fix starts with a failing test (RED), then the implementation (GREEN).
+- Run `npm test` and `npm run check` before committing.
 
-- TypeScript strict; tidak ada `any` tanpa alasan yang ditulis di komentar.
-- Nama domain berbahasa Indonesia bila domainnya Indonesia: `bergabung`,
-  `totalBelanja`, `anggota`, `halaman`. Nama teknis umum tetap Inggris:
-  `filterMembers`, `sortMembers`, `onPageChange`.
-- Teks UI berbahasa Indonesia, termasuk pesan error dan empty state.
-- Komentar hanya untuk "mengapa" yang tidak terlihat dari kode. Batasan yang
-  disengaja memakai format `shortcut: <batas>, <kapan ditingkatkan>`.
-- Tidak menambah dependensi untuk hal yang bisa ditulis dengan API platform
-  (ikon, chart, date library).
+## 18. Project code style
 
-## 18. Memakai Svelte MCP
+- TypeScript strict; no `any` without a reason written in a comment.
+- Domain identifiers stay Indonesian because the domain is Indonesian:
+  `bergabung`, `totalBelanja`, `anggota`, `halaman`. General technical names stay
+  English: `filterMembers`, `sortMembers`, `onPageChange`.
+- UI copy is English, including errors, empty states, and API messages.
+- Rupiah keeps the `Rp` prefix and Indonesian digit grouping
+  (`toLocaleString('id-ID')`). Dates use English month names
+  (Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec).
+- Comments only explain "why" that the code cannot show. Deliberate limits use
+  the format `shortcut: <limit>, <when to upgrade>`.
+- Do not add a dependency for something the platform APIs can do (icons, charts,
+  date libraries).
 
-Proyek ini mendaftarkan server MCP `svelte` lewat `opencode.jsonc`
-(`npx -y @sveltejs/mcp`). Gunakan sebelum menjawab pertanyaan API Svelte:
+## 19. Using the Svelte MCP
 
-1. `list-sections` → cari bagian dokumentasi yang relevan.
-2. `get-documentation` → ambil dokumentasi terbaru untuk bagian tersebut.
-3. `svelte-autofixer` → jalankan pada kode Svelte yang baru ditulis sampai tidak
-   ada saran tersisa.
-4. `playground-link` → hanya untuk potongan kode yang tidak ditulis ke file.
+This project registers the `svelte` MCP server in `opencode.jsonc`
+(`npx -y @sveltejs/mcp`). Use it before answering Svelte API questions:
 
-Aturan: jangan menjawab API Svelte/SvelteKit dari ingatan bila MCP atau Context7
-tersedia. Dokumentasi menang atas kebiasaan.
+1. `list-sections` → find the relevant documentation section.
+2. `get-documentation` → fetch the current documentation for that section.
+3. `svelte-autofixer` → run it on newly written Svelte code until no suggestions
+   remain.
+4. `playground-link` → only for snippets that are not written to a file.
 
-## Sumber
+Rule: do not answer Svelte/SvelteKit API questions from memory when the MCP or
+Context7 is available. Documentation wins over habit.
 
-Diambil lewat Context7 pada 2026-10-25, lalu diverifikasi ke halaman resmi:
+## Sources
+
+Collected through Context7 on 2026-10-25, then verified against the official
+pages:
 
 - Context7 library `/websites/svelte_dev_svelte` — Svelte 5: runes, `$state`,
-  `$derived`, `$effect`, `$props`, `$bindable`, snippet, store.
-- Context7 library `/websites/svelte_dev_kit` — SvelteKit 3: `load`, `$app/state`,
-  `defineEnvVars`, adapter, testing.
+  `$derived`, `$effect`, `$props`, `$bindable`, snippets, stores.
+- Context7 library `/websites/svelte_dev_kit` — SvelteKit 3: `load`,
+  `$app/state`, `defineEnvVars`, adapters, testing.
 - <https://svelte.dev/docs/svelte/$state>
 - <https://svelte.dev/docs/svelte/$derived>
 - <https://svelte.dev/docs/svelte/$effect>
