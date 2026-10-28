@@ -130,6 +130,18 @@ describe('member page', () => {
 		expect(rows(container)[0][4]).toBe(maxSpend());
 	});
 
+	it('waits for the debounce before filtering', async () => {
+		const { container } = renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), { target: { value: 'zzzz' } });
+
+		expect(screen.queryByText('No matching members')).toBeNull();
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
+
+		await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+
+		expect(screen.getByText('No matching members')).toBeTruthy();
+	});
+
 	it('returns to page 1 when a filter changes', async () => {
 		renderPage();
 		await fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
@@ -137,14 +149,30 @@ describe('member page', () => {
 
 		await search('Siti Aminah');
 		expect(screen.getByText(/Showing 1–1/)).toBeTruthy();
+
+		// Clearing the search proves the page reset: page 3 would show 21–30 of the full list.
+		await search('');
+		expect(screen.getByText(/Showing 1–10 of 50 members/)).toBeTruthy();
 	});
 
-	it('resets all filters', async () => {
+	it('resets all filters and cancels a pending search', async () => {
 		const { container } = renderPage();
-		await search('zzzz');
+		await fireEvent.input(screen.getByLabelText('Search members'), { target: { value: 'zzzz' } });
 		await fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+		await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
 
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
+		expect((screen.getByLabelText('Search members') as HTMLInputElement).value).toBe('');
+	});
+
+	it('cancels a pending search on unmount', async () => {
+		const { unmount } = renderPage();
+		await fireEvent.input(screen.getByLabelText('Search members'), { target: { value: 'zzzz' } });
+		expect(vi.getTimerCount()).toBe(1);
+
+		unmount();
+
+		expect(vi.getTimerCount()).toBe(0);
 	});
 
 	it('opens the export and import dialogs', async () => {

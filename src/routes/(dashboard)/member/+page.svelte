@@ -34,6 +34,7 @@
 
 	// The field stays responsive; the table waits so it does not refilter on every keystroke.
 	const applyQuery = debounce((value: string) => {
+		if (value === query) return;
 		query = value;
 		page = 1;
 	}, SEARCH_DEBOUNCE_MS);
