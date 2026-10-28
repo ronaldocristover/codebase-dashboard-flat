@@ -7,7 +7,7 @@ export interface MemberInput {
 	status: MemberStatus;
 }
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateMemberInput(
 	input: Partial<Record<keyof MemberInput, unknown>>

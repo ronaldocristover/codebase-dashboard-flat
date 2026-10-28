@@ -1,42 +1,13 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { get } from 'svelte/store';
-	import { auth, login } from '#lib/stores/auth';
+	import { enhance } from '$app/forms';
 	import Logo from '#lib/components/Logo.svelte';
 
-	const POLA_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	let {
+		form
+	}: { form: { errors?: Record<string, string>; email?: string } | null } = $props();
 
-	let email = $state('');
-	let password = $state('');
-	let errorEmail = $state('');
-	let errorPassword = $state('');
-
-	onMount(() => {
-		if (get(auth)) goto('/');
-	});
-
-	function kirim(event: SubmitEvent) {
-		event.preventDefault();
-		errorEmail = '';
-		errorPassword = '';
-
-		if (email.trim() === '') {
-			errorEmail = 'Email is required';
-		} else if (!POLA_EMAIL.test(email.trim())) {
-			errorEmail = 'Enter a valid email';
-		}
-
-		if (password.trim() === '') {
-			errorPassword = 'Password is required';
-		}
-
-		if (errorEmail || errorPassword) return;
-
-		if (login(email, password)) {
-			goto('/');
-		}
-	}
+	const errorEmail = $derived(form?.errors?.email);
+	const errorPassword = $derived(form?.errors?.password);
 
 	const kolom =
 		'w-full rounded-md border border-line-strong bg-white px-3 py-2.5 text-sm text-ink outline-none placeholder:text-muted focus:border-primary';
@@ -63,7 +34,7 @@
 	</div>
 
 	<div class="flex items-center justify-center p-6 md:p-10">
-		<form class="w-full max-w-sm" onsubmit={kirim} novalidate>
+		<form class="w-full max-w-sm" method="POST" use:enhance novalidate>
 			<h2 class="text-xl font-semibold text-primary">Sign in</h2>
 			<p class="mb-5 mt-1 text-xs text-muted">Enter your store admin account</p>
 
@@ -72,7 +43,7 @@
 				id="email"
 				name="email"
 				type="email"
-				bind:value={email}
+				value={form?.email ?? ''}
 				class={kolom}
 				placeholder="name@tokoku.id"
 				autocomplete="email"
@@ -90,7 +61,6 @@
 				id="password"
 				name="password"
 				type="password"
-				bind:value={password}
 				class={kolom}
 				placeholder="••••••••"
 				autocomplete="current-password"

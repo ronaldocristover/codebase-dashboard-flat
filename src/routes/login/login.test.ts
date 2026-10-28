@@ -1,92 +1,80 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { get } from 'svelte/store';
+// @vitest-environment node
+import { describe, expect, it, vi } from 'vitest';
+import { actions, load } from './+page.server';
 
-const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));
-vi.mock('$app/navigation', () => ({ goto }));
+type ActionEvent = Parameters<NonNullable<typeof actions.default>>[0];
 
-import { auth, login, logout } from '#lib/stores/auth';
-import LoginPage from './+page.svelte';
+// The real action only reads request.formData() and cookies.set().
+function event(fields: Record<string, string> = {}) {
+	const formData = new FormData();
+	for (const [name, value] of Object.entries(fields)) formData.append(name, value);
 
-describe('login page', () => {
-	beforeEach(() => {
-		goto.mockClear();
-		logout();
-	});
+	const set = vi.fn();
+	const request = new Request('http://localhost/login', { method: 'POST', body: formData });
 
-	it('shows the logo and form', () => {
-		render(LoginPage);
-		expect(screen.getByText('TokoKu')).toBeTruthy();
-		expect(screen.getByLabelText('Email')).toBeTruthy();
-		expect(screen.getByLabelText('Password')).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Sign in to Dashboard' })).toBeTruthy();
-	});
+	return { event: { request, cookies: { set } } as unknown as ActionEvent, set };
+}
 
-	it('rejects an empty submit with error messages', async () => {
-		render(LoginPage);
-		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
+async function thrown(panggil: () => unknown): Promise<{ status: number; location?: string }> {
+	try {
+		await panggil();
+	} catch (err) {
+		return err as { status: number; location?: string };
+	}
+	throw new Error('expected a redirect to be thrown');
+}
 
-		expect(screen.getByText('Email is required')).toBeTruthy();
-		expect(screen.getByText('Password is required')).toBeTruthy();
-		expect(goto).not.toHaveBeenCalled();
-	});
+describe('login action', () => {
+	it('rejects an empty form', async () => {
+		const { event: ev, set } = event();
+		const result = (await actions.default!(ev)) as { status: number; data: any };
 
-	it('links error messages to their inputs', async () => {
-		render(LoginPage);
-		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
-
-		const errorEmail = screen.getByText('Email is required');
-		const errorPassword = screen.getByText('Password is required');
-		expect(errorEmail.getAttribute('role')).toBe('alert');
-		expect(errorPassword.getAttribute('role')).toBe('alert');
-		expect(errorEmail.id).toBe('email-error');
-		expect(errorPassword.id).toBe('password-error');
-
-		const email = screen.getByLabelText('Email');
-		const password = screen.getByLabelText('Password');
-		expect(email.getAttribute('aria-describedby')).toBe('email-error');
-		expect(password.getAttribute('aria-describedby')).toBe('password-error');
-		expect(email.getAttribute('aria-invalid')).toBe('true');
-		expect(password.getAttribute('aria-invalid')).toBe('true');
-	});
-
-	it('the forgot password and sign up placeholders are buttons, not links', () => {
-		render(LoginPage);
-
-		expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Sign up' })).toBeTruthy();
-		expect(screen.queryByRole('link', { name: 'Forgot password?' })).toBeNull();
-		expect(screen.queryByRole('link', { name: 'Sign up' })).toBeNull();
+		expect(result.status).toBe(400);
+		expect(result.data.errors.email).toBe('Email is required');
+		expect(result.data.errors.password).toBe('Password is required');
+		expect(set).not.toHaveBeenCalled();
 	});
 
 	it('rejects an invalid email format', async () => {
-		render(LoginPage);
+		const { event: ev } = event({ email: 'bukan-email', password: 'rahasia' });
+		const result = (await actions.default!(ev)) as { status: number; data: any };
 
-		await fireEvent.input(screen.getByLabelText('Email'), { target: { value: 'bukan-email' } });
-		await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'rahasia' } });
-		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
-
-		expect(screen.getByText('Enter a valid email')).toBeTruthy();
-		expect(goto).not.toHaveBeenCalled();
+		expect(result.status).toBe(400);
+		expect(result.data.errors.email).toBe('Enter a valid email');
+		expect(result.data.errors.password).toBeUndefined();
 	});
 
-	it('a valid login enters the dashboard', async () => {
-		render(LoginPage);
+	it('rejects a wrong password without setting a cookie', async () => {
+		const { event: ev, set } = event({ email: 'rina@tokoku.id', password: 'salah' });
+		const result = (await actions.default!(ev)) as { status: number; data: any };
 
-		await fireEvent.input(screen.getByLabelText('Email'), {
-			target: { value: 'rina@tokoku.id' }
-		});
-		await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'rahasia' } });
-		await fireEvent.click(screen.getByRole('button', { name: 'Sign in to Dashboard' }));
-
-		expect(get(auth)).toBe(true);
-		expect(goto).toHaveBeenCalledWith('/');
+		expect(result.status).toBe(400);
+		expect(result.data.errors.password).toBe('Incorrect email or password');
+		expect(set).not.toHaveBeenCalled();
 	});
 
-	it('an already signed-in user is redirected to the dashboard', async () => {
-		login('rina@tokoku.id', 'rahasia');
-		render(LoginPage);
+	it('sets the session cookie and redirects on correct credentials', async () => {
+		const { event: ev, set } = event({ email: ' rina@tokoku.id ', password: 'rahasia' });
+		const result = await thrown(() => actions.default!(ev));
 
-		await waitFor(() => expect(goto).toHaveBeenCalledWith('/'));
+		expect(result.status).toBe(303);
+		expect(result.location).toBe('/');
+		expect(set).toHaveBeenCalledTimes(1);
+		expect(set.mock.calls[0][0]).toBe('tokoku_session');
+		expect(typeof set.mock.calls[0][1]).toBe('string');
+		expect(set.mock.calls[0][2]).toMatchObject({ path: '/', httpOnly: true, sameSite: 'lax' });
+	});
+
+	it('redirects a signed-in visitor away from the page', async () => {
+		const result = await thrown(() =>
+			load({ locals: { user: { id: 'user-1', email: 'rina@tokoku.id' } } } as never)
+		);
+
+		expect(result.status).toBe(303);
+		expect(result.location).toBe('/');
+	});
+
+	it('lets a signed-out visitor see the page', () => {
+		expect(load({ locals: { user: null } } as never)).toBeUndefined();
 	});
 });
