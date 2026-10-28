@@ -85,7 +85,37 @@ describe('logged', () => {
 		expect(err.mock.calls[0][0]).toContain('secret: member MBR-0001');
 	});
 
-	it('re-throws a throw that carries a numeric status instead of answering 500', () => {
+	it('logs a 500 as a request line so a failed request still counts', async () => {
+		const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		await logged('GET', '/api/members', () => {
+			throw new Error('boom');
+		});
+
+		expect(info).toHaveBeenCalledTimes(1);
+		expect(JSON.parse(info.mock.calls[0][0] as string)).toMatchObject({
+			method: 'GET',
+			path: '/api/members',
+			status: 500
+		});
+	});
+
+	it('answers 500 when an async handler rejects', async () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
+		const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = await logged('GET', '/x', async () => {
+			throw new Error('boom');
+		});
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({ error: 'Something went wrong' });
+		expect(err).toHaveBeenCalledTimes(1);
+	});
+
+	it('re-throws a 4xx HTTP error carrying a body instead of answering 500', () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		let err: unknown;
@@ -98,6 +128,63 @@ describe('logged', () => {
 		}
 
 		expect(err).toMatchObject({ status: 404 });
+	});
+
+	it('re-throws an async 4xx HTTP error carrying a body', async () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		await expect(
+			logged('GET', '/api/members/x', async () => {
+				throw { status: 404, body: { message: 'Member not found' } };
+			})
+		).rejects.toMatchObject({ status: 404 });
+	});
+
+	it('logs a status-bearing non-HTTP error and answers 500', async () => {
+		const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+		const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = await logged('GET', '/x', async () => {
+			throw Object.assign(new Error('upstream down'), { status: 503 });
+		});
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({ error: 'Something went wrong' });
+		expect(err.mock.calls[0][0]).toContain('upstream down');
+		expect(JSON.parse(info.mock.calls[0][0] as string)).toMatchObject({ status: 500 });
+	});
+
+	it('answers 500 for a 4xx status without a body', async () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = await logged('GET', '/x', async () => {
+			throw { status: 404 };
+		});
+
+		expect(response.status).toBe(500);
+	});
+
+	it('answers 500 when a sync handler returns no Response', () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
+		const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = logged('GET', '/x', () => undefined as unknown as Response);
+
+		expect(response).toBeInstanceOf(Response);
+		expect((response as Response).status).toBe(500);
+		expect(err.mock.calls[0][0]).toContain('handler returned no Response');
+	});
+
+	it('answers 500 when an async handler resolves without a Response', async () => {
+		vi.spyOn(console, 'info').mockImplementation(() => {});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+
+		const response = await logged('GET', '/x', async () => undefined as unknown as Response);
+
+		expect(response.status).toBe(500);
+		expect(await response.json()).toEqual({ error: 'Something went wrong' });
 	});
 
 	it('keeps a synchronous handler synchronous', () => {
