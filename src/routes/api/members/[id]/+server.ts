@@ -1,15 +1,24 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { findMember, updateMember, type MemberInput } from '#lib/server/memberStore';
+import { isRateLimited } from '#lib/server/rateLimit';
 import { validateMemberInput } from '#lib/utils/memberValidation';
 
-export const GET: RequestHandler = ({ params }) => {
+export const GET: RequestHandler = ({ params, getClientAddress }) => {
+	if (isRateLimited({ getClientAddress })) {
+		return json({ error: 'Too many requests' }, { status: 429 });
+	}
+
 	const member = findMember(params.id);
 	if (!member) error(404, 'Member not found');
 	return json(member);
 };
 
-export const PATCH: RequestHandler = async ({ params, request }) => {
+export const PATCH: RequestHandler = async ({ params, request, getClientAddress }) => {
+	if (isRateLimited({ getClientAddress })) {
+		return json({ error: 'Too many requests' }, { status: 429 });
+	}
+
 	const existing = findMember(params.id);
 	if (!existing) error(404, 'Member not found');
 
