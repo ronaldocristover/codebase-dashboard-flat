@@ -1,7 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { logout } from '#lib/stores/auth';
-
 	const user = { nama: 'Rina Setiawan', email: 'rina@tokoku.id', inisial: 'RS' };
 
 	let open = $state(false);
@@ -27,12 +24,6 @@
 			document.removeEventListener('keydown', tombolEsc);
 		};
 	});
-
-	function keluar() {
-		open = false;
-		logout();
-		goto('/login');
-	}
 </script>
 
 <div class="relative" bind:this={akar}>
@@ -86,15 +77,21 @@
 
 			<div class="my-1 h-px bg-line"></div>
 
-			<button
-				type="button"
-				class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] text-danger hover:bg-danger/10"
-				role="menuitem"
-				onclick={keluar}
+			<!-- Closing the menu unmounts this form, which cancels the submission if it happens during the submit event. -->
+			<form
+				method="POST"
+				action="/logout"
+				onsubmit={() => setTimeout(() => (open = false), 0)}
 			>
-				<span class="h-3 w-3 rounded-sm bg-danger/20"></span>
-				Sign out
-			</button>
+				<button
+					type="submit"
+					class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] text-danger hover:bg-danger/10"
+					role="menuitem"
+				>
+					<span class="h-3 w-3 rounded-sm bg-danger/20"></span>
+					Sign out
+				</button>
+			</form>
 		</div>
 	{/if}
 </div>

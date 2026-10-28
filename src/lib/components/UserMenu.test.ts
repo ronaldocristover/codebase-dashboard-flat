@@ -1,16 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-const { goto } = vi.hoisted(() => ({ goto: vi.fn() }));
-vi.mock('$app/navigation', () => ({ goto }));
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { describe, expect, it } from 'vitest';
 
 import UserMenu from './UserMenu.svelte';
 
 describe('UserMenu', () => {
-	beforeEach(() => {
-		goto.mockClear();
-	});
-
 	it('the menu is hidden before the avatar is clicked', () => {
 		render(UserMenu);
 		expect(screen.queryByText('Sign out')).toBeNull();
@@ -46,12 +39,26 @@ describe('UserMenu', () => {
 		expect(screen.queryByText('Sign out')).toBeNull();
 	});
 
-	it('sign out button goes to the login page', async () => {
+	it('sign out is a submit button in a form that posts to /logout', async () => {
 		render(UserMenu);
 		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
-		await fireEvent.click(screen.getByText('Sign out'));
 
-		expect(goto).toHaveBeenCalledWith('/login');
-		expect(screen.queryByText('Sign out')).toBeNull();
+		const signOut = screen.getByRole('menuitem', { name: /Sign out/i });
+		expect(signOut.getAttribute('type')).toBe('submit');
+
+		const form = signOut.closest('form');
+		expect(form?.getAttribute('method')).toBe('POST');
+		expect(form?.getAttribute('action')).toBe('/logout');
+	});
+
+	it('closes the menu when the sign out form is submitted', async () => {
+		render(UserMenu);
+		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
+
+		const form = screen.getByRole('menuitem', { name: /Sign out/i }).closest('form');
+		expect(form).toBeTruthy();
+
+		await fireEvent.submit(form as HTMLFormElement);
+		await waitFor(() => expect(screen.queryByText('Sign out')).toBeNull());
 	});
 });
