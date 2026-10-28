@@ -3,7 +3,30 @@ import type { RequestHandler } from './$types';
 import { createMember, listMembers, type MemberInput } from '#lib/server/memberStore';
 import { validateMemberInput } from '#lib/utils/memberValidation';
 
-export const GET: RequestHandler = () => json(listMembers());
+const DEFAULT_PER_PAGE = 20;
+const MAX_PER_PAGE = 100;
+
+function parseIntOr(raw: string | null, fallback: number): number {
+	const value = Number.parseInt(raw ?? '', 10);
+	return Number.isFinite(value) ? value : fallback;
+}
+
+export const GET: RequestHandler = ({ url }) => {
+	const page = Math.max(1, parseIntOr(url.searchParams.get('page'), 1));
+	const perPage = Math.min(
+		MAX_PER_PAGE,
+		Math.max(1, parseIntOr(url.searchParams.get('perPage'), DEFAULT_PER_PAGE))
+	);
+
+	const all = listMembers();
+	const total = all.length;
+	const start = (page - 1) * perPage;
+
+	return json({
+		members: all.slice(start, start + perPage),
+		pagination: { page, perPage, total, totalPages: Math.ceil(total / perPage) }
+	});
+};
 
 export const POST: RequestHandler = async ({ request }) => {
 	let body: unknown;

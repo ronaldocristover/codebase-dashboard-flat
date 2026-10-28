@@ -7,7 +7,7 @@ import { GET as getMember, PATCH as patchMember } from './[id]/+server';
 import { GET as getOrders } from './[id]/orders/+server';
 
 // Test double: handlers require route-specific RequestEvent types.
-function event(params: Record<string, string> = {}, body?: unknown): never {
+function event(params: Record<string, string> = {}, body?: unknown, qs = ''): never {
 	const request =
 		body === undefined
 			? undefined
@@ -16,7 +16,7 @@ function event(params: Record<string, string> = {}, body?: unknown): never {
 					headers: { 'content-type': 'application/json' },
 					body: typeof body === 'string' ? body : JSON.stringify(body)
 				});
-	return { params, request } as never;
+	return { params, request, url: new URL(`http://localhost/api/members${qs}`) } as never;
 }
 
 async function statusOf(panggil: () => unknown): Promise<number> {
@@ -33,12 +33,57 @@ beforeEach(() => {
 
 describe('GET /api/members', () => {
 	it('returns the seeded members', async () => {
-		const response = await getList(event());
+		const response = await getList(event({}, undefined, '?perPage=100'));
 
 		expect(response.status).toBe(200);
 		const body = await response.json();
-		expect(body).toHaveLength(seed.length);
-		expect(body[0].id).toBe(seed[0].id);
+		expect(body.members).toHaveLength(seed.length);
+		expect(body.members[0].id).toBe(seed[0].id);
+	});
+
+	it('defaults to page 1 and 20 per page', async () => {
+		const { members, pagination } = await (await getList(event())).json();
+
+		expect(pagination).toEqual({ page: 1, perPage: 20, total: seed.length, totalPages: 3 });
+		expect(members).toHaveLength(20);
+	});
+
+	it('slices the list with page and perPage', async () => {
+		const { members, pagination } = await (await getList(event({}, undefined, '?page=2&perPage=5'))).json();
+
+		expect(pagination.page).toBe(2);
+		expect(pagination.perPage).toBe(5);
+		expect(pagination.totalPages).toBe(10);
+		expect(members).toHaveLength(5);
+		expect(members[0].id).toBe(seed[5].id);
+	});
+
+	it('clamps perPage to 100', async () => {
+		const { members, pagination } = await (await getList(event({}, undefined, '?perPage=99999'))).json();
+
+		expect(pagination.perPage).toBe(100);
+		expect(members).toHaveLength(seed.length);
+	});
+
+	it('clamps perPage and page to at least 1', async () => {
+		const { pagination } = await (await getList(event({}, undefined, '?page=0&perPage=0'))).json();
+
+		expect(pagination.page).toBe(1);
+		expect(pagination.perPage).toBe(1);
+	});
+
+	it('falls back to page 1 when page is not a number', async () => {
+		const { pagination } = await (await getList(event({}, undefined, '?page=abc'))).json();
+
+		expect(pagination.page).toBe(1);
+	});
+
+	it('returns an empty list for a page past the end', async () => {
+		const { members, pagination } = await (await getList(event({}, undefined, '?page=99'))).json();
+
+		expect(members).toEqual([]);
+		expect(pagination.page).toBe(99);
+		expect(pagination.total).toBe(seed.length);
 	});
 });
 
@@ -57,9 +102,9 @@ describe('POST /api/members', () => {
 		expect(created.totalBelanja).toBe(0);
 		expect(created.bergabung).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-		const daftar = await (await getList(event())).json();
-		expect(daftar).toHaveLength(seed.length + 1);
-		expect(daftar.some((member: { id: string }) => member.id === created.id)).toBe(true);
+		const daftar = await (await getList(event({}, undefined, '?perPage=100'))).json();
+		expect(daftar.members).toHaveLength(seed.length + 1);
+		expect(daftar.members.some((member: { id: string }) => member.id === created.id)).toBe(true);
 	});
 
 	it('rejects an invalid payload with field errors', async () => {
