@@ -7,7 +7,14 @@ import { GET as getMember, PATCH as patchMember } from './[id]/+server';
 import { GET as getOrders } from './[id]/orders/+server';
 
 // Test double: handlers require route-specific RequestEvent types.
-function event(params: Record<string, string> = {}, body?: unknown, qs = ''): never {
+let eventSeq = 0;
+
+function event(
+	params: Record<string, string> = {},
+	body?: unknown,
+	qs = '',
+	address = `test-client-${(eventSeq += 1)}`
+): never {
 	const request =
 		body === undefined
 			? undefined
@@ -16,7 +23,12 @@ function event(params: Record<string, string> = {}, body?: unknown, qs = ''): ne
 					headers: { 'content-type': 'application/json' },
 					body: typeof body === 'string' ? body : JSON.stringify(body)
 				});
-	return { params, request, url: new URL(`http://localhost/api/members${qs}`) } as never;
+	return {
+		params,
+		request,
+		url: new URL(`http://localhost/api/members${qs}`),
+		getClientAddress: () => address
+	} as never;
 }
 
 async function statusOf(panggil: () => unknown): Promise<number> {
@@ -143,6 +155,21 @@ describe('PATCH /api/members/[id]', () => {
 
 		expect(response.status).toBe(400);
 		expect(await response.json()).toHaveProperty('errors.email', 'Enter a valid email');
+	});
+});
+
+describe('rate limit', () => {
+	it('answers 429 once a client passes the limit', async () => {
+		const address = '203.0.113.9';
+		const call = () => getList(event({}, undefined, '', address));
+
+		let allowed: Response | undefined;
+		for (let i = 0; i < 100; i += 1) allowed = await call();
+
+		expect(allowed?.status).toBe(200);
+		const blocked = await call();
+		expect(blocked.status).toBe(429);
+		expect(await blocked.json()).toEqual({ error: 'Too many requests' });
 	});
 });
 

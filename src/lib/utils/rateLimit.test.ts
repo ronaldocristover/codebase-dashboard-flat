@@ -1,7 +1,14 @@
 // @vitest-environment node
 // Lives in utils/ because vite.config.ts excludes src/lib/server/** from Vitest.
 import { describe, expect, it } from 'vitest';
-import { checkRateLimit, RATE_LIMIT, RATE_WINDOW_MS } from '#lib/server/rateLimit';
+import {
+	checkRateLimit,
+	isRateLimited,
+	RATE_LIMIT,
+	RATE_LIMIT_MAX_KEYS,
+	RATE_WINDOW_MS,
+	rateLimitSize
+} from '#lib/server/rateLimit';
 
 describe('checkRateLimit', () => {
 	it('allows RATE_LIMIT calls with the same key', () => {
@@ -31,5 +38,40 @@ describe('checkRateLimit', () => {
 		expect(checkRateLimit(key, 0).ok).toBe(false);
 
 		expect(checkRateLimit(key, RATE_WINDOW_MS)).toEqual({ ok: true, remaining: RATE_LIMIT - 1 });
+	});
+
+	it('evicts expired entries once the map reaches the key cap', () => {
+		checkRateLimit('stale-before-cap', 0);
+		for (let i = 0; i < RATE_LIMIT_MAX_KEYS; i += 1) checkRateLimit(`filler-${i}`, 0);
+		const sizeBefore = rateLimitSize();
+
+		checkRateLimit('newcomer', RATE_WINDOW_MS);
+
+		expect(sizeBefore).toBeGreaterThanOrEqual(RATE_LIMIT_MAX_KEYS);
+		expect(rateLimitSize()).toBeLessThan(sizeBefore);
+	});
+});
+
+describe('isRateLimited', () => {
+	it('limits a single client address and not another', () => {
+		const address = () => '203.0.113.9';
+		for (let i = 0; i < RATE_LIMIT; i += 1) isRateLimited({ getClientAddress: address });
+
+		expect(isRateLimited({ getClientAddress: address })).toBe(true);
+		expect(isRateLimited({ getClientAddress: () => '203.0.113.10' })).toBe(false);
+	});
+
+	it('fails open when the adapter has no address support', () => {
+		const event = {
+			getClientAddress: () => {
+				throw new Error('address not supported');
+			}
+		};
+
+		expect(isRateLimited(event)).toBe(false);
+	});
+
+	it('falls back to a shared key when the event has no getClientAddress', () => {
+		expect(isRateLimited({})).toBe(false);
 	});
 });
