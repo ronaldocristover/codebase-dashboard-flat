@@ -1,10 +1,26 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { members } from '#lib/mock/members';
 import { formatRupiah } from '#lib/utils/format';
 import MemberPage from './+page.svelte';
 
 vi.mock('$app/navigation', () => ({ invalidateAll: vi.fn() }));
+
+const SEARCH_DEBOUNCE_MS = 250;
+
+// Only the debounce timer is faked; Date and microtasks stay real so Svelte flushes normally.
+beforeEach(() => {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+});
+
+async function search(value: string) {
+	await fireEvent.input(screen.getByLabelText('Search members'), { target: { value } });
+	await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS);
+}
 
 function rows(container: HTMLElement): string[][] {
 	return Array.from(container.querySelectorAll('tbody tr')).map((tr) =>
@@ -41,9 +57,7 @@ describe('member page', () => {
 
 	it('searches members by name', async () => {
 		const { container } = renderPage();
-		await fireEvent.input(screen.getByLabelText('Search members'), {
-			target: { value: 'Siti Aminah' }
-		});
+		await search('Siti Aminah');
 
 		const list = rows(container);
 		expect(list).toHaveLength(1);
@@ -52,9 +66,7 @@ describe('member page', () => {
 
 	it('links the member name and the view/edit actions', async () => {
 		renderPage();
-		await fireEvent.input(screen.getByLabelText('Search members'), {
-			target: { value: 'Siti Aminah' }
-		});
+		await search('Siti Aminah');
 
 		const member = members.find((m) => m.nama === 'Siti Aminah');
 		expect(member).toBeTruthy();
@@ -72,9 +84,7 @@ describe('member page', () => {
 
 	it('shows the empty state when nothing matches', async () => {
 		renderPage();
-		await fireEvent.input(screen.getByLabelText('Search members'), {
-			target: { value: 'zzzz' }
-		});
+		await search('zzzz');
 
 		expect(screen.getByText('No matching members')).toBeTruthy();
 		expect(screen.getByText('Try changing the keyword or filters.')).toBeTruthy();
@@ -83,9 +93,7 @@ describe('member page', () => {
 	it('shows the empty state when filters leave no data', async () => {
 		renderPage();
 
-		await fireEvent.input(screen.getByLabelText('Search members'), {
-			target: { value: 'Siti Aminah' }
-		});
+		await search('Siti Aminah');
 		await fireEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
 		await fireEvent.change(screen.getByLabelText('Joined'), { target: { value: '7' } });
 
@@ -127,15 +135,13 @@ describe('member page', () => {
 		await fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
 		expect(screen.getByText(/Showing 21–30/)).toBeTruthy();
 
-		await fireEvent.input(screen.getByLabelText('Search members'), {
-			target: { value: 'Siti Aminah' }
-		});
+		await search('Siti Aminah');
 		expect(screen.getByText(/Showing 1–1/)).toBeTruthy();
 	});
 
 	it('resets all filters', async () => {
 		const { container } = renderPage();
-		await fireEvent.input(screen.getByLabelText('Search members'), { target: { value: 'zzzz' } });
+		await search('zzzz');
 		await fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
 
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(10);

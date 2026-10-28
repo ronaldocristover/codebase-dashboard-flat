@@ -6,15 +6,18 @@
 	import Pagination from '#lib/components/Pagination.svelte';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import type { Member, MemberStatus, SortDir, SortKey } from '#lib/types';
+	import { debounce } from '#lib/utils/debounce';
 	import { formatRupiah, formatTanggal } from '#lib/utils/format';
 	import { filterMembers, paginate, sortMembers } from '#lib/utils/memberFilters';
 
 	let { data }: { data: { members: Member[] } } = $props();
 
 	const PER_PAGE = 10;
+	const SEARCH_DEBOUNCE_MS = 250;
 	const now = new Date();
 
 	let query = $state('');
+	let queryInput = $state('');
 	let statusFilter = $state<'semua' | MemberStatus>('semua');
 	let rentang = $state<'semua' | 7 | 30 | 90>('semua');
 	let page = $state(1);
@@ -28,6 +31,14 @@
 	);
 	const sorted = $derived(sortMembers(filtered, sortKey, sortDir));
 	const rows = $derived(paginate(sorted, page, PER_PAGE));
+
+	// The field stays responsive; the table waits so it does not refilter on every keystroke.
+	const applyQuery = debounce((value: string) => {
+		query = value;
+		page = 1;
+	}, SEARCH_DEBOUNCE_MS);
+
+	$effect(() => () => applyQuery.cancel());
 
 	function resetPage() {
 		page = 1;
@@ -44,6 +55,8 @@
 	}
 
 	function resetAll() {
+		applyQuery.cancel();
+		queryInput = '';
 		query = '';
 		statusFilter = 'semua';
 		rentang = 'semua';
@@ -106,8 +119,8 @@
 			type="search"
 			aria-label="Search members"
 			placeholder="Search name, email, or phone…"
-			bind:value={query}
-			oninput={resetPage}
+			bind:value={queryInput}
+			oninput={(event) => applyQuery.call(event.currentTarget.value)}
 			class="{field} min-w-[200px] flex-1"
 		/>
 
