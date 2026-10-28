@@ -1,5 +1,12 @@
-// @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+
+vi.mock('$app/forms', () => ({ enhance: () => {} }));
+vi.mock('$app/env', () => ({ dev: true }));
+
+import { dev } from '$app/env';
+import { SESSION_COOKIE, SESSION_MAX_AGE } from '#lib/server/session';
+import LoginPage from './+page.svelte';
 import { actions, load } from './+page.server';
 
 type ActionEvent = Parameters<NonNullable<typeof actions.default>>[0];
@@ -60,9 +67,17 @@ describe('login action', () => {
 		expect(result.status).toBe(303);
 		expect(result.location).toBe('/');
 		expect(set).toHaveBeenCalledTimes(1);
-		expect(set.mock.calls[0][0]).toBe('tokoku_session');
+		expect(set.mock.calls[0][0]).toBe(SESSION_COOKIE);
 		expect(typeof set.mock.calls[0][1]).toBe('string');
-		expect(set.mock.calls[0][2]).toMatchObject({ path: '/', httpOnly: true, sameSite: 'lax' });
+		expect(set.mock.calls[0][2]).toMatchObject({
+			path: '/',
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: !dev,
+			maxAge: SESSION_MAX_AGE
+		});
+		expect(dev).toBe(true);
+		expect(set.mock.calls[0][2].secure).toBe(false);
 	});
 
 	it('redirects a signed-in visitor away from the page', async () => {
@@ -76,5 +91,36 @@ describe('login action', () => {
 
 	it('lets a signed-out visitor see the page', () => {
 		expect(load({ locals: { user: null } } as never)).toBeUndefined();
+	});
+});
+
+describe('login page', () => {
+	it('links error messages to their inputs', () => {
+		render(LoginPage, {
+			props: { form: { errors: { email: 'Email is required', password: 'Password is required' } } }
+		});
+
+		const errorEmail = screen.getByText('Email is required');
+		const errorPassword = screen.getByText('Password is required');
+		expect(errorEmail.getAttribute('role')).toBe('alert');
+		expect(errorPassword.getAttribute('role')).toBe('alert');
+		expect(errorEmail.id).toBe('email-error');
+		expect(errorPassword.id).toBe('password-error');
+
+		const email = screen.getByLabelText('Email');
+		const password = screen.getByLabelText('Password');
+		expect(email.getAttribute('aria-describedby')).toBe('email-error');
+		expect(password.getAttribute('aria-describedby')).toBe('password-error');
+		expect(email.getAttribute('aria-invalid')).toBe('true');
+		expect(password.getAttribute('aria-invalid')).toBe('true');
+	});
+
+	it('the forgot password and sign up placeholders are buttons, not links', () => {
+		render(LoginPage, { props: { form: null } });
+
+		expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeTruthy();
+		expect(screen.getByRole('button', { name: 'Sign up' })).toBeTruthy();
+		expect(screen.queryByRole('link', { name: 'Forgot password?' })).toBeNull();
+		expect(screen.queryByRole('link', { name: 'Sign up' })).toBeNull();
 	});
 });
