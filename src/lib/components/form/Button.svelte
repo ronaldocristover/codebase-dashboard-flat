@@ -3,7 +3,7 @@
 	import Icon, { type IconName } from './Icon.svelte';
 
 	export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-	export type ButtonSize = 'sm' | 'md';
+	export type ButtonSize = 'sm' | 'md' | 'lg';
 
 	let {
 		children,
@@ -37,7 +37,8 @@
 
 	const sizes: Record<ButtonSize, string> = {
 		sm: 'min-h-8 px-3 py-1.5 text-xs',
-		md: 'min-h-10 px-4 py-2.5 text-sm'
+		md: 'min-h-10 px-4 py-2.5 text-sm',
+		lg: 'min-h-12 px-6 py-3 text-base'
 	};
 </script>
 
