@@ -47,20 +47,23 @@
 
 		const accepted: File[] = [];
 		const rejected: string[] = [];
+		const imagesOnly = accept.split(',').every((type) => type.trim().startsWith('image/'));
 		for (const item of incoming.slice(0, room)) {
 			const typeMessage =
-				accept.startsWith('image/') && !isImageFile(item)
-					? 'only images are allowed'
-					: fileTypeError(item);
+				imagesOnly && !isImageFile(item) ? 'only images are allowed' : fileTypeError(item);
 			const message = typeMessage ?? fileSizeError(item, maxSizeMb);
 			if (message) {
-				rejected.push(`${item.name}: ${message}`);
+				rejected.push(`${item.name.slice(0, 40)}: ${message}`);
 				continue;
 			}
 			accepted.push(item);
 		}
-		error = rejected.join('; ');
-		if (incoming.length > room) error = `Only ${maxFiles} files allowed`;
+		error = [
+			rejected.join('; '),
+			incoming.length > room ? `Only ${maxFiles} files allowed` : ''
+		]
+			.filter(Boolean)
+			.join('; ');
 
 		if (accepted.length) files = [...files, ...accepted];
 		input.value = '';

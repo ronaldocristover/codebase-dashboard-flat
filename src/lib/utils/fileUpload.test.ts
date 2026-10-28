@@ -26,9 +26,10 @@ describe('isImageFile', () => {
 });
 
 describe('fileTypeError', () => {
-	it('accepts images and PDFs', () => {
-		expect(fileTypeError(new File([], 'a.pdf', { type: 'application/pdf' }))).toBeNull();
-		expect(fileTypeError(new File([], 'a.png', { type: 'image/png' }))).toBeNull();
+	it('accepts every allowed type', () => {
+		for (const type of ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf']) {
+			expect(fileTypeError(new File([], 'a', { type }))).toBeNull();
+		}
 	});
 
 	it('rejects other types with a message naming the allowed types', () => {
