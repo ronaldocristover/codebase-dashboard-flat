@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
 	import { errorClass, hintClass, labelClass } from './formStyles';
-	import { fileSizeError, formatFileSize, isImageFile } from '#lib/utils/fileUpload';
+	import { fileSizeError, fileTypeError, formatFileSize, isImageFile } from '#lib/utils/fileUpload';
 
 	let {
 		label = 'Files',
@@ -46,18 +46,20 @@
 		}
 
 		const accepted: File[] = [];
+		const rejected: string[] = [];
 		for (const item of incoming.slice(0, room)) {
-			if (accept.startsWith('image/') && !isImageFile(item)) {
-				error = `${item.name}: only images are allowed`;
-				continue;
-			}
-			const message = fileSizeError(item, maxSizeMb);
+			const typeMessage =
+				accept.startsWith('image/') && !isImageFile(item)
+					? 'only images are allowed'
+					: fileTypeError(item);
+			const message = typeMessage ?? fileSizeError(item, maxSizeMb);
 			if (message) {
-				error = `${item.name}: ${message}`;
+				rejected.push(`${item.name}: ${message}`);
 				continue;
 			}
 			accepted.push(item);
 		}
+		error = rejected.join('; ');
 		if (incoming.length > room) error = `Only ${maxFiles} files allowed`;
 
 		if (accepted.length) files = [...files, ...accepted];

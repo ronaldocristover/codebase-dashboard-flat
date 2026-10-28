@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from './Icon.svelte';
 	import { errorClass, hintClass, labelClass } from './formStyles';
-	import { fileSizeError, formatFileSize } from '#lib/utils/fileUpload';
+	import { fileSizeError, fileTypeError, formatFileSize } from '#lib/utils/fileUpload';
 
 	let {
 		label = 'File',
@@ -27,7 +27,7 @@
 		const picked = input.files?.[0];
 		if (!picked) return;
 
-		const message = fileSizeError(picked, maxSizeMb);
+		const message = fileSizeError(picked, maxSizeMb) ?? fileTypeError(picked);
 		if (message) {
 			error = message;
 			input.value = '';
