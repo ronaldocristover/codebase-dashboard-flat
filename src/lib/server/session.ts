@@ -7,8 +7,15 @@ export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const sessions = new Map<string, { userId: string; expires: number }>();
 
 export function createSession(userId: string): string {
+	const now = Date.now();
+
+	// Expired entries are only dropped on read otherwise, so logins that are never read again would leak.
+	for (const [token, session] of sessions) {
+		if (now > session.expires) sessions.delete(token);
+	}
+
 	const token = randomUUID();
-	sessions.set(token, { userId, expires: Date.now() + SESSION_MAX_AGE * 1000 });
+	sessions.set(token, { userId, expires: now + SESSION_MAX_AGE * 1000 });
 	return token;
 }
 
