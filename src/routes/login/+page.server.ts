@@ -1,6 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { dev } from '$app/env';
-import { createSession, SESSION_COOKIE, SESSION_MAX_AGE } from '#lib/server/session';
+import { isRateLimited } from '#lib/server/rateLimit';
+import {
+	createSession,
+	destroySession,
+	SESSION_COOKIE,
+	SESSION_MAX_AGE
+} from '#lib/server/session';
 import { EMAIL } from '#lib/utils/memberValidation';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -12,7 +18,11 @@ export const load: PageServerLoad = ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
+	default: async ({ request, cookies, getClientAddress }) => {
+		if (isRateLimited({ getClientAddress })) {
+			return fail(429, { errors: { password: 'Too many attempts' } });
+		}
+
 		const data = await request.formData();
 		const email = typeof data.get('email') === 'string' ? (data.get('email') as string).trim() : '';
 		const password = typeof data.get('password') === 'string' ? (data.get('password') as string) : '';
@@ -28,6 +38,10 @@ export const actions: Actions = {
 		if (email !== DEMO_EMAIL || password !== DEMO_PASSWORD) {
 			return fail(400, { email, errors: { password: 'Incorrect email or password' } });
 		}
+
+		// A re-login must not leave the previous token usable for the rest of its week.
+		const old = cookies.get(SESSION_COOKIE);
+		if (old) destroySession(old);
 
 		cookies.set(SESSION_COOKIE, createSession('user-1'), {
 			path: '/',

@@ -1,5 +1,22 @@
 <script lang="ts">
-	const user = { nama: 'Rina Setiawan', email: 'rina@tokoku.id', inisial: 'RS' };
+	let { user }: { user: { id: string; email: string } } = $props();
+
+	// The session only carries an email, so the display name and initials come from its local part.
+	const nama = $derived(
+		user.email
+			.split('@')[0]
+			.split(/[._-]+/)
+			.filter(Boolean)
+			.map((bagian) => bagian[0].toUpperCase() + bagian.slice(1))
+			.join(' ')
+	);
+	const inisial = $derived(
+		nama
+			.split(' ')
+			.map((bagian) => bagian[0])
+			.join('')
+			.slice(0, 2)
+	);
 
 	let open = $state(false);
 	let akar: HTMLDivElement;
@@ -34,7 +51,7 @@
 		aria-expanded={open}
 		onclick={() => (open = !open)}
 	>
-		{user.inisial}
+		{inisial}
 	</button>
 
 	{#if open}
@@ -43,7 +60,7 @@
 			role="menu"
 		>
 			<div class="border-b border-line px-2 py-2">
-				<div class="text-sm font-semibold">{user.nama}</div>
+				<div class="text-sm font-semibold">{nama}</div>
 				<div class="text-[11px] text-muted">{user.email}</div>
 			</div>
 

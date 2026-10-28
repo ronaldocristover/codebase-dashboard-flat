@@ -5,7 +5,7 @@
 	import { setMobileNav, sidebarCollapsed } from '#lib/stores/ui';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
 
 	const judul = $derived(
 		page.url.pathname.startsWith('/member')
@@ -22,6 +22,7 @@
 	<div class="flex min-h-screen flex-col {$sidebarCollapsed ? 'md:pl-[72px]' : 'md:pl-64'}">
 		<TopNav
 			{judul}
+			user={data.user}
 			onToggleMenu={() => {
 				sidebarCollapsed.set(false);
 				setMobileNav(true);

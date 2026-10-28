@@ -74,6 +74,8 @@ describe('validateMemberInput bounds', () => {
 		expect(validateMemberInput({ ...valid, hp: '1234567890' })).toHaveProperty('hp');
 		expect(validateMemberInput({ ...valid, hp: '081234567890' })).not.toHaveProperty('hp');
 		expect(validateMemberInput({ ...valid, hp: '6281234567890' })).not.toHaveProperty('hp');
+		expect(validateMemberInput({ ...valid, hp: '+6281234567890' })).not.toHaveProperty('hp');
+		expect(validateMemberInput({ ...valid, hp: '+62 812-3456-7890' })).not.toHaveProperty('hp');
 	});
 
 	it('rejects an email without a domain label', () => {

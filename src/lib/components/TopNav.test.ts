@@ -5,9 +5,11 @@ vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
 
 import TopNav from './TopNav.svelte';
 
+const user = { id: 'user-1', email: 'rina@tokoku.id' };
+
 describe('TopNav', () => {
 	it('shows the logo and page title', () => {
-		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu: () => {} } });
+		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu: () => {}, user } });
 
 		expect(screen.getByText('TokoKu')).toBeTruthy();
 		expect(screen.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeTruthy();
@@ -15,7 +17,7 @@ describe('TopNav', () => {
 
 	it('the menu button calls onToggleMenu once', async () => {
 		const onToggleMenu = vi.fn();
-		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu } });
+		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu, user } });
 
 		await fireEvent.click(screen.getByRole('button', { name: 'Open menu' }));
 
@@ -23,7 +25,7 @@ describe('TopNav', () => {
 	});
 
 	it('the page title is desktop only', () => {
-		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu: () => {} } });
+		render(TopNav, { props: { judul: 'Dashboard', onToggleMenu: () => {}, user } });
 
 		const judul = screen.getByRole('heading', { level: 1 });
 		expect(judul.className).toContain('hidden');

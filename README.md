@@ -12,9 +12,8 @@ npm run dev
 ```
 
 Open `http://localhost:5173` (Vite moves to `5174` if the port is busy). Login
-accepts any valid email with a non-empty password, for example
-`rina@tokoku.id` / `rahasia`. The session lives in memory, so a refresh logs you
-out.
+accepts the demo account `rina@tokoku.id` / `rahasia`. The session is an
+`httpOnly` cookie, but sessions live in server memory, so a restart logs you out.
 
 ## Commands
 
@@ -29,6 +28,7 @@ npm run preview   # preview the build
 ## Features
 
 - `/login` — sign-in form with a branding panel
+- `/logout` — POST action that destroys the session and returns to `/login`
 - `/` — ecommerce dashboard: KPI cards, sales trend, conversion funnel,
   customer mix, revenue by channel, top products, inventory alerts, recent orders
 - `/member` — member table with search, status/date filters, sorting, pagination,
@@ -44,7 +44,8 @@ npm run preview   # preview the build
 Reads and writes go through route handlers backed by
 `src/lib/server/memberStore.ts` (members, in memory) and
 `src/lib/mock/orders.ts` (sample orders per member). Changes survive navigation
-but not a server restart.
+but not a server restart. Every `/api/*` request needs a session; without one the
+guard in `src/hooks.server.ts` answers `401 {"error":"Unauthorized"}`.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
@@ -57,12 +58,13 @@ but not a server restart.
 ## Structure
 
 ```
+src/hooks.server.ts   reads the session cookie, sets locals.user, answers /api/* with 401
 src/lib/components/   UI components + colocated tests
 src/lib/mock/         sample data (members, orders, dashboard)
-src/lib/server/       server-only modules (in-memory member store)
-src/lib/stores/       auth and UI state (in-memory)
+src/lib/server/       server-only modules (session, rate limit, logger, HTTP helpers, member store)
+src/lib/stores/       UI state (sidebar, mobile drawer)
 src/lib/utils/        format, validation, filter, sort, pagination (pure)
-src/routes/           pages, dashboard shell, guard, API routes
+src/routes/           pages, dashboard shell, server guard, API routes
 ```
 
 ## Documentation
@@ -74,6 +76,10 @@ src/routes/           pages, dashboard shell, guard, API routes
 
 ## Limitations
 
-A UI demo, not a production product. Auth is simulated in memory and the guard
-runs on the client. The API is unauthenticated and loses data on restart.
-Products, Orders, and Reports have no pages. No deploy adapter is configured.
+A UI demo, not a production product. Auth is a server session: the `tokoku_session`
+`httpOnly` cookie is resolved in `src/hooks.server.ts` into `event.locals.user`,
+the guard in `(dashboard)/+layout.server.ts` redirects a signed-out visitor to
+`/login`, and `/api/*` answers `401` without a session. Sessions live in process
+memory, so a restart logs everyone out. The API is a dummy and loses data on
+restart. Products, Orders, and Reports have no pages. No deploy adapter is
+configured.

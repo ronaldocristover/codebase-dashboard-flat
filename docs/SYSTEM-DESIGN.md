@@ -27,6 +27,7 @@ Constraints that shape the design:
 | Route | File | Access | Content |
 | --- | --- | --- | --- |
 | `/login` | `src/routes/login/+page.svelte` | public | Email + password form, branding panel on the left |
+| `/logout` | `src/routes/logout/+page.server.ts` | public | POST action: destroys the session, clears the cookie, redirects to `/login` |
 | `/` | `src/routes/(dashboard)/+page.svelte` | guard | 4 stat cards, line chart, bar chart, recent orders table |
 | `/member` | `src/routes/(dashboard)/member/+page.svelte` | guard | Member table: search, filter, sort, pagination; Excel import/export dialogs |
 | `/member/new` | `src/routes/(dashboard)/member/new/+page.svelte` | guard | Create form; POST to the API; inline field errors |
@@ -46,6 +47,7 @@ the sidebar, and a 404 inside the dashboard keeps the navigation visible.
 
 | Method + path | File | Response |
 | --- | --- | --- |
+| any `/api/*` without a session | `src/hooks.server.ts` | `401` with `{ error: 'Unauthorized' }` |
 | `GET /api/members` | `src/routes/api/members/+server.ts` | `200` with `Member[]` |
 | `POST /api/members` | `src/routes/api/members/+server.ts` | `201` with the created `Member`; `400` with `{ errors }` |
 | `GET /api/members/[id]` | `src/routes/api/members/[id]/+server.ts` | `200` with `Member`; `404` with `{ message: 'Member not found' }` |
@@ -79,9 +81,9 @@ lib/types.ts       shared domain types
 
 Dependency direction: `routes` may import every layer; `components` may import
 `utils`, `stores`, and `types`; `utils` imports only `types`; `server` imports
-`mock`, `utils`, and `types`; only `+server.ts` files import `#lib/server/*`. No
-layer imports from `routes`. Pages and components never import the server store;
-they read data through `fetch` in a load function.
+`mock`, `utils`, and `types`; only `+server.ts` files and `hooks.server.ts`
+import `#lib/server/*`. No layer imports from `routes`. Pages and components
+never import the server store; they read data through `fetch` in a load function.
 
 Page state (filters, sort, active page, form fields) deliberately lives in page
 components, not in a global store. Stores are reserved for state that is truly
@@ -200,7 +202,9 @@ Flow:
   restart clears them.
 - `src/hooks.server.ts` is the single place that turns the cookie into
   `event.locals.user`. It also answers `/api/*` with
-  `401 {"error":"Unauthorized"}` when there is no user.
+  `401 {"error":"Unauthorized"}` when there is no user, keyed on the matched
+  `event.route.id`, because SvelteKit routes on the decoded path and a raw
+  pathname check lets `/%61pi/members` through.
 - `ssr` stays on for the dashboard: the guard is a server `load`, and the shell
   renders on the server.
 - The guard only checks that a session exists; there are no roles or permissions.

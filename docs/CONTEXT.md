@@ -48,6 +48,7 @@ pattern also matches that shell's own command line and kills it. Use
 ```
 src/
   app.html                     font, <html lang="en">, title
+  hooks.server.ts              session cookie → locals.user; 401 for /api/*
   lib/
     components/                UI components + colocated tests
     components/form/           reusable form controls (inputs, date pickers, uploads)
@@ -88,8 +89,10 @@ src/
 - Non-UI logic is pure functions in `src/lib/utils/` and tested separately.
   Member field rules live in `memberValidation.ts` so the API and the forms
   share them.
-- `src/lib/server/` is server-only. Only `+server.ts` files import it; pages get
-  data through `fetch` in `+page.ts`.
+- `src/lib/server/` is server-only. `+server.ts` files and `src/hooks.server.ts`
+  import it; pages get data through `fetch` in `+page.ts`. Server modules are
+  excluded from the Vitest `include` list, so `session`, `rateLimit`, `logger`,
+  and `http` are tested from `src/lib/utils/` instead.
 - Components take typed props; no global store for page state. Stores are
   reserved for sidebar/drawer state; login status lives on the server.
 - UI copy is English. Currency keeps `Rp` plus Indonesian digit grouping

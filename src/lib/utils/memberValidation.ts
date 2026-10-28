@@ -14,7 +14,8 @@ export const MAX_HP = 15;
 export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const HP_DIGITS = new RegExp(`^\\d{9,${MAX_HP}}$`);
-const HP_PREFIX = /^(\+62|62|0)8/;
+// The leading + is stripped below, so only the 62 and 0 forms reach this test.
+const HP_PREFIX = /^(62|0)8/;
 
 export function validateMemberInput(
 	input: Partial<Record<keyof MemberInput, unknown>>
@@ -29,7 +30,7 @@ export function validateMemberInput(
 	if (!EMAIL.test(email)) errors.email = 'Enter a valid email';
 	else if (email.length > MAX_EMAIL) errors.email = `Email must be ${MAX_EMAIL} characters or fewer`;
 
-	const hp = typeof input.hp === 'string' ? input.hp.replace(/[\s-]/g, '') : '';
+	const hp = typeof input.hp === 'string' ? input.hp.replace(/[\s-]/g, '').replace(/^\+/, '') : '';
 	if (!HP_DIGITS.test(hp) || !HP_PREFIX.test(hp)) errors.hp = 'Enter a valid phone number';
 
 	if (input.status !== 'aktif' && input.status !== 'nonaktif') {

@@ -103,6 +103,13 @@
 				});
 				if (res.ok) {
 					count += 1;
+				} else if (res.status === 429) {
+					importErrors.push({
+						row,
+						message:
+							'Import stopped: the server allows 100 requests per minute. Wait a minute, then import the remaining rows.'
+					});
+					break;
 				} else {
 					const body = (await res.json().catch(() => ({}))) as {
 						errors?: Record<string, string>;

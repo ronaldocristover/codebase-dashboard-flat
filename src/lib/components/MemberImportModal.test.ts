@@ -91,6 +91,32 @@ describe('MemberImportModal', () => {
 		await waitFor(() => expect(screen.getByText('Imported 1 row.')).toBeTruthy());
 	});
 
+	it('stops the loop and names the rate limit when the API answers 429', async () => {
+		mocks.readMemberFile.mockResolvedValue({
+			rows: [
+				{ row: 2, input },
+				{ row: 3, input: { ...input, email: 'siti2@example.com' } }
+			],
+			errors: []
+		});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue({
+				ok: false,
+				status: 429,
+				json: async () => ({ error: 'Too many requests' })
+			})
+		);
+		const { container } = renderModal();
+
+		await chooseFile(container);
+		await fireEvent.click(await screen.findByRole('button', { name: 'Import 2 members' }));
+		await fireEvent.click(screen.getByRole('button', { name: 'Confirm import' }));
+
+		expect(await screen.findByText(/100 requests per minute/)).toBeTruthy();
+		expect(fetch).toHaveBeenCalledTimes(1);
+	});
+
 	it('returns to the preview when the confirmation is dismissed', async () => {
 		const { container } = renderModal();
 

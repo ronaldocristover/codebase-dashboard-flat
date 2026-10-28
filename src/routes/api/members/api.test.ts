@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest';
 import { members as seed } from '#lib/mock/members';
-import { listMembers, resetMembers } from '#lib/server/memberStore';
+import { createMember, listMembers, resetMembers } from '#lib/server/memberStore';
 import { GET as getList, POST as postMember } from './+server';
 import { GET as getMember, PATCH as patchMember } from './[id]/+server';
 import { GET as getOrders } from './[id]/orders/+server';
@@ -67,6 +67,24 @@ describe('GET /api/members', () => {
 
 		expect(pagination.perPage).toBe(100);
 		expect(members).toHaveLength(seed.length);
+	});
+
+	it('never returns more than 100 members even when the store is larger', async () => {
+		for (let i = 0; i < 60; i += 1) {
+			createMember({
+				nama: `Extra ${i}`,
+				email: `extra${i}@mail.com`,
+				hp: '081234567890',
+				status: 'aktif'
+			});
+		}
+
+		const { members, pagination } = await (
+			await getList(event({}, undefined, '?perPage=99999'))
+		).json();
+
+		expect(pagination.total).toBe(seed.length + 60);
+		expect(members).toHaveLength(100);
 	});
 
 	it('clamps perPage and page to at least 1', async () => {

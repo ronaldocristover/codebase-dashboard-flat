@@ -5,21 +5,31 @@ vi.mock('$app/forms', () => ({ enhance: () => {} }));
 vi.mock('$app/env', () => ({ dev: true }));
 
 import { dev } from '$app/env';
-import { SESSION_COOKIE, SESSION_MAX_AGE } from '#lib/server/session';
+import { createSession, readSession, SESSION_COOKIE, SESSION_MAX_AGE } from '#lib/server/session';
 import LoginPage from './+page.svelte';
 import { actions, load } from './+page.server';
 
 type ActionEvent = Parameters<NonNullable<typeof actions.default>>[0];
 
-// The real action only reads request.formData() and cookies.set().
-function event(fields: Record<string, string> = {}) {
+let addressSeq = 0;
+
+// The real action only reads request.formData(), cookies, and getClientAddress().
+function event(
+	fields: Record<string, string> = {},
+	options: { token?: string; address?: string } = {}
+) {
 	const formData = new FormData();
 	for (const [name, value] of Object.entries(fields)) formData.append(name, value);
 
 	const set = vi.fn();
+	const get = vi.fn(() => options.token);
 	const request = new Request('http://localhost/login', { method: 'POST', body: formData });
+	const getClientAddress = () => options.address ?? `login-test-${(addressSeq += 1)}`;
 
-	return { event: { request, cookies: { set } } as unknown as ActionEvent, set };
+	return {
+		event: { request, cookies: { get, set }, getClientAddress } as unknown as ActionEvent,
+		set
+	};
 }
 
 async function thrown(panggil: () => unknown): Promise<{ status: number; location?: string }> {
@@ -58,6 +68,35 @@ describe('login action', () => {
 		expect(result.status).toBe(400);
 		expect(result.data.errors.password).toBe('Incorrect email or password');
 		expect(set).not.toHaveBeenCalled();
+	});
+
+	it('answers 429 once a client passes the attempt limit', async () => {
+		const address = '198.51.100.7';
+		const attempt = () =>
+			actions.default!(event({ email: 'rina@tokoku.id', password: 'salah' }, { address }).event);
+
+		let allowed: { status: number } | undefined;
+		for (let i = 0; i < 100; i += 1) allowed = (await attempt()) as { status: number };
+
+		expect(allowed?.status).toBe(400);
+
+		const blocked = (await attempt()) as { status: number; data: any };
+		expect(blocked.status).toBe(429);
+		expect(blocked.data.errors.password).toBe('Too many attempts');
+	});
+
+	it('destroys a token already in the cookie before issuing a new one', async () => {
+		const old = createSession('user-1');
+		const { event: ev, set } = event(
+			{ email: 'rina@tokoku.id', password: 'rahasia' },
+			{ token: old }
+		);
+
+		const result = await thrown(() => actions.default!(ev));
+
+		expect(result.status).toBe(303);
+		expect(readSession(old)).toBeNull();
+		expect(readSession(set.mock.calls[0][1])).toEqual({ userId: 'user-1' });
 	});
 
 	it('sets the session cookie and redirects on correct credentials', async () => {
