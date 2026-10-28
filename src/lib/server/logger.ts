@@ -40,6 +40,7 @@ export function logged(
 		// The caught message can hold member data, so the client only ever sees a generic body.
 		logError(method, path, error);
 		logRequest(method, path, 500, Date.now() - started);
+		// shortcut: this fallback builds its own response, so a member endpoint answering 500 carries no cache-control; revisit if a shared cache or CDN sits in front.
 		return json({ error: 'Something went wrong' }, { status: 500 });
 	};
 

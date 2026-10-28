@@ -31,14 +31,6 @@ function event(
 	} as never;
 }
 
-async function statusOf(panggil: () => unknown): Promise<number> {
-	try {
-		return ((await panggil()) as Response).status;
-	} catch (err) {
-		return (err as { status: number }).status;
-	}
-}
-
 beforeEach(() => {
 	resetMembers();
 });
@@ -208,26 +200,34 @@ describe('cache headers', () => {
 		expect(blocked?.status).toBe(429);
 		expect(blocked?.headers.get('cache-control')).toBe('private, no-store');
 	});
+
+	it('marks invalid-JSON 400 responses private', async () => {
+		const responses = [
+			await postMember(event({}, '{oops')),
+			await patchMember(event({ id: seed[1].id }, '{oops'))
+		];
+
+		expect(responses.map((response) => response.status)).toEqual([400, 400]);
+		for (const response of responses) {
+			expect(response.headers.get('cache-control')).toBe('private, no-store');
+		}
+	});
 });
 
 describe('unknown member', () => {
-	it('returns 404 from every member endpoint', async () => {
+	it('returns a 404 response with the not-found message and no shared cache', async () => {
 		const params = { id: 'MBR-9999' };
+		const responses = [
+			await getMember(event(params)),
+			await patchMember(event(params, { nama: 'X' })),
+			await getOrders(event(params))
+		];
 
-		expect(await statusOf(() => getMember(event(params)))).toBe(404);
-		expect(await statusOf(() => patchMember(event(params, { nama: 'X' })))).toBe(404);
-		expect(await statusOf(() => getOrders(event(params)))).toBe(404);
-	});
-
-	it('includes the not-found message', () => {
-		let err: unknown;
-		try {
-			getMember(event({ id: 'MBR-9999' }));
-		} catch (error) {
-			err = error;
+		expect(responses.map((response) => response.status)).toEqual([404, 404, 404]);
+		for (const response of responses) {
+			expect(await response.json()).toEqual({ message: 'Member not found' });
+			expect(response.headers.get('cache-control')).toBe('private, no-store');
 		}
-
-		expect(err).toMatchObject({ status: 404, body: { message: 'Member not found' } });
 	});
 });
 

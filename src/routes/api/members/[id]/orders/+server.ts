@@ -1,4 +1,3 @@
-import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ordersForMember } from '#lib/mock/orders';
 import { jsonPrivate } from '#lib/server/http';
@@ -12,6 +11,6 @@ export const GET: RequestHandler = ({ url, params, getClientAddress }) =>
 			return jsonPrivate({ error: 'Too many requests' }, { status: 429 });
 		}
 
-		if (!findMember(params.id)) error(404, 'Member not found');
+		if (!findMember(params.id)) return jsonPrivate({ message: 'Member not found' }, { status: 404 });
 		return jsonPrivate(ordersForMember(params.id));
 	});

@@ -1,4 +1,3 @@
-import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { jsonPrivate } from '#lib/server/http';
 import { logged } from '#lib/server/logger';
@@ -13,7 +12,7 @@ export const GET: RequestHandler = ({ url, params, getClientAddress }) =>
 		}
 
 		const member = findMember(params.id);
-		if (!member) error(404, 'Member not found');
+		if (!member) return jsonPrivate({ message: 'Member not found' }, { status: 404 });
 		return jsonPrivate(member);
 	});
 
@@ -24,7 +23,7 @@ export const PATCH: RequestHandler = ({ url, params, request, getClientAddress }
 		}
 
 		const existing = findMember(params.id);
-		if (!existing) error(404, 'Member not found');
+		if (!existing) return jsonPrivate({ message: 'Member not found' }, { status: 404 });
 
 		let body: unknown;
 		try {
