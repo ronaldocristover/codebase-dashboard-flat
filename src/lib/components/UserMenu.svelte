@@ -77,12 +77,7 @@
 
 			<div class="my-1 h-px bg-line"></div>
 
-			<!-- Closing the menu unmounts this form, which cancels the submission if it happens during the submit event. -->
-			<form
-				method="POST"
-				action="/logout"
-				onsubmit={() => setTimeout(() => (open = false), 0)}
-			>
+			<form method="POST" action="/logout" role="none">
 				<button
 					type="submit"
 					class="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] text-danger hover:bg-danger/10"

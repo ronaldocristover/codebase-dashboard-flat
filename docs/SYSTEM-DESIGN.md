@@ -15,11 +15,12 @@ Constraints that shape the design:
 
 - No icon or chart dependencies; all SVG is written inline.
 - No gradients, shadows, or large corners. Separators use 1px borders.
-- Auth is an in-memory simulation only; the guard is UX, not security.
-- The API is unauthenticated and keeps data in module-level arrays. Writes last
+- Auth is a server session: an `httpOnly` cookie resolved in `hooks.server.ts`.
+  The guard is UX plus a server `load`, not authorization for every resource.
+- The API requires a session and keeps data in module-level arrays. Writes last
   until the server restarts.
-- SSR is disabled for the dashboard area, so auth and sidebar stores stay
-  client-only. API endpoints still execute on the server.
+- SSR is on for the dashboard; the sidebar stores only mutate in the browser, so
+  the server render is deterministic.
 
 ## 2. Route map
 
@@ -69,8 +70,8 @@ routes/            page composition, page-local state, Tailwind markup
   api/members/     +server.ts handlers: parse, validate, call the store
 lib/components/    presentational components + colocated tests
 lib/components/form/ form controls: inputs, date pickers, dropdown, uploads, stepper
-lib/server/        server-only in-memory member store (never client code)
-lib/stores/        cross-component state (auth, UI)
+lib/server/        server-only: session store + in-memory member store
+lib/stores/        cross-component state (sidebar, mobile drawer)
 lib/utils/         pure functions: format, filter/sort/paginate, validation
 lib/mock/          sample data: members, orders, dashboard
 lib/types.ts       shared domain types
@@ -186,36 +187,36 @@ does not pay for them until a dialog is used.
 Flow:
 
 ```
-/login  ──submit──►  login(email, password)
-                        │ validates email format + non-empty password
+/login  ──submit──►  action: check demo account
+                        │ sets tokoku_session (httpOnly cookie)
                         ▼
-                    auth.set(true)  ──►  goto('/')
-                        │
+                    redirect(303, '/')  ──►  hooks.server.ts reads the cookie
+                        │                      and sets event.locals.user
                         ▼
-             (dashboard)/+layout.ts  ──get(auth) false──►  redirect(303, '/login')
+             (dashboard)/+layout.server.ts  ──locals.user null──►  redirect(303, '/login')
 ```
 
-- `auth` is an in-memory `writable(false)`. A refresh clears the session.
-- `ssr = false` in `(dashboard)/+layout.ts` makes the guard run in the browser,
-  where the store exists. Without it, the server has no login state.
-- The guard only checks that a session exists; there are no roles, permissions,
-  or expiry.
-- Logout lives in the avatar dropdown (`UserMenu`), not the sidebar: `logout()`
-  then `goto('/login')`.
-- A logged-in user who opens `/login` is sent to `/` via `onMount`.
-- API routes have no auth check at all. That is acceptable only for this demo; a
-  real API must authenticate every route.
-
-Because the guard is client-side, anyone calling a dashboard route directly gets
-an empty shell until hydration finishes, then a redirect. That is enough for a
-demo, not for production. Real auth belongs in `hooks.server.ts`, with an
-`httpOnly` cookie and a session check on the server before rendering data.
+- Sessions live in `src/lib/server/session.ts` as a module-level `Map`. A server
+  restart clears them.
+- `src/hooks.server.ts` is the single place that turns the cookie into
+  `event.locals.user`. It also answers `/api/*` with
+  `401 {"error":"Unauthorized"}` when there is no user.
+- `ssr` stays on for the dashboard: the guard is a server `load`, and the shell
+  renders on the server.
+- The guard only checks that a session exists; there are no roles or permissions.
+  Sessions expire after seven days.
+- Logout lives in the avatar dropdown (`UserMenu`), not the sidebar: a
+  `<form method="POST" action="/logout">` runs the `default` action, which calls
+  `destroySession`, deletes the cookie, and redirects to `/login`.
+- A logged-in user who opens `/login` is sent to `/` by the page's `load`.
+- API routes share the session check from `hooks.server.ts`; they add no
+  per-resource permissions.
 
 ## 6. UI state
 
 | State | Location | Nature |
 | --- | --- | --- |
-| `auth` | `lib/stores/auth.ts` | global, in-memory |
+| `event.locals.user` | `hooks.server.ts` | per request, from the session cookie |
 | `sidebarCollapsed` | `lib/stores/ui.ts` | global, persists until refresh |
 | `mobileNavOpen` | `lib/stores/ui.ts` | global, mobile drawer |
 | `submenu` | `Sidebar.svelte` | local, one open submenu |
@@ -309,7 +310,8 @@ For production, pick one:
 
 - `@sveltejs/adapter-node` → standalone Node server, good for VPS/Docker.
 - `@sveltejs/adapter-static` → static SPA; plausible because the dashboard does
-  not need SSR, but the guard still has to become real auth.
+  not need SSR, but a static build cannot run `hooks.server.ts`, so the API and
+  the session would have to move off this repo's server code.
 - A platform adapter (Vercel/Netlify/Cloudflare) if hosting is already chosen.
 
 Release steps: `npm ci` → `npm run check` → `npm test` → `npm run build` → run
@@ -317,10 +319,11 @@ the adapter output.
 
 ## 11. Limits and risks
 
-- **Auth is not security.** Session in memory, guard on the client, no cookie.
+- **Auth is not authorization.** The session cookie gates the dashboard and the
+  API, but there are no roles, permissions, or per-resource checks.
 - **Dummy API.** Data lives in module-level arrays and resets when the server
   restarts. There is no persistence.
-- **Unauthenticated API.** Every endpoint is open. Demo only.
+- **Session in memory.** A restart or a second server process logs everyone out.
 - **No delete.** Members can be created and edited, not removed.
 - **Import is sequential and does not deduplicate.** Re-importing the same file
   creates duplicate members; every row is a separate `POST`.
@@ -340,8 +343,8 @@ the adapter output.
 
 If this demo becomes a product, a sensible order of changes:
 
-1. Replace in-memory auth with a server session (`hooks.server.ts`, `httpOnly`
-   cookie) and require auth on the API.
+1. Move sessions from the in-memory `Map` to a database or Redis, so they
+   survive restarts and multiple instances.
 2. Replace `memberStore.ts` with a database behind `+page.server.ts`; keep the
    shared validation module so API and forms cannot drift.
 3. Add `adapter-node` (or a platform adapter) and a build pipeline.

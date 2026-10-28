@@ -189,26 +189,29 @@ Stores in `src/lib/stores/` are module singletons — created once per process. 
 the server, a singleton is shared across requests, so user state could leak to
 another user.
 
-This repo is safe because `src/routes/(dashboard)/+layout.ts` sets `ssr = false`
-for the whole dashboard area. **Do not remove `ssr = false` while auth still lives
-in the in-memory store.**
+This repo keeps SSR on for the dashboard and is still safe, because the only
+module stores left (`sidebarCollapsed`, `mobileNavOpen`) hold UI flags that are
+only mutated from browser event handlers and never during render. Login state is
+not in a store: it comes from the request cookie through `hooks.server.ts` +
+`event.locals`.
 
 Rules:
 
 - Per-user/per-request state must come from `load` (server) or a cookie, not from
   a module variable.
-- Pure UI state (sidebar, drawer) may live in a module as long as that area is
-  client-only.
-- If SSR is enabled later, move auth to `hooks.server.ts` + `event.locals` and
-  pass it through `load`.
+- Pure UI state (sidebar, drawer) may live in a module only while it defaults to
+  the same value on the server and the client; check the SSR HTML if you change
+  the default or mutate it during render.
 - `writable` stores still work with runes: `$sidebarCollapsed` in `Sidebar.svelte`
   is auto-subscription. Do not write `get(store)` in markup; it disables
   reactivity.
 
-`src/lib/server/memberStore.ts` is a module singleton too, shared by every
-request. That is intentional for this dummy API but makes the data global,
-unauthenticated, and lost on restart. `#lib/server/*` must never be imported from
-components, pages, or `+page.ts`; only `+server.ts` files and tests reach it.
+`src/lib/server/memberStore.ts` and `src/lib/server/session.ts` are module
+singletons too, shared by every request. That is intentional for this dummy API
+but makes the data global and lost on restart; sessions are keyed per user and
+gated by the `hooks.server.ts` check. `#lib/server/*` must never be imported from
+components, pages, or `+page.ts`; only `+server.ts`/`+page.server.ts` files and
+tests reach it.
 
 ## 8. SvelteKit 3: import `#lib`, not `$lib`
 
@@ -224,7 +227,7 @@ Bare `#lib` is deliberately not mapped because nothing imports it and
 Examples:
 
 ```ts
-import { auth } from '#lib/stores/auth';
+import { sidebarCollapsed } from '#lib/stores/ui';
 import { filterMembers } from '#lib/utils/memberFilters';
 import { findMember } from '#lib/server/memberStore'; // +server.ts only
 ```
@@ -264,34 +267,36 @@ Rules:
 ## 10. Route groups, guards, and redirects
 
 The `src/routes/(dashboard)/` structure groups pages that share a shell without
-changing the URL. The guard lives in `+layout.ts`:
+changing the URL. The guard lives in `+layout.server.ts`:
 
 ```ts
 import { redirect } from '@sveltejs/kit';
-import { get } from 'svelte/store';
-import { auth } from '#lib/stores/auth';
+import type { LayoutServerLoad } from './$types';
 
-export const ssr = false;
+export const load: LayoutServerLoad = ({ locals }) => {
+	if (!locals.user) redirect(303, '/login');
 
-export function load() {
-	if (!get(auth)) {
-		redirect(303, '/login');
-	}
-}
+	return { user: locals.user };
+};
 ```
+
+`locals.user` is filled by `src/hooks.server.ts` from the session cookie, so the
+guard runs on the server and the dashboard still renders with SSR.
 
 Rules:
 
 - `redirect()` from `@sveltejs/kit` is thrown, not returned; do not swallow it
   with an empty `try/catch`.
 - Use status `303` for redirects after a state change.
-- A guard in a universal `load` is UX only. Real authorization belongs on the
-  server (`hooks.server.ts` or `+page.server.ts`) because client code can be
-  bypassed.
+- Put the guard in `+layout.server.ts`, not a universal `load`: only the server
+  version can read `locals` and run before HTML is rendered.
+- A `+server.ts` route outside the group is not covered by the layout guard. This
+  repo checks `/api/*` once in `hooks.server.ts` and answers `401`; a route that
+  needs finer rules must check `locals.user` itself.
 - Pages that need the shell and a custom 404 put `+error.svelte` inside the group,
   such as `(dashboard)/+error.svelte`.
-- Put `export const ssr = false` on the layout closest to the need, not at the
-  root, so public pages can still render on the server.
+- Only add `export const ssr = false` when a module store would otherwise render
+  differently on the server; `load` in a server layout still runs with it set.
 
 ## 11. Data loading for member pages
 

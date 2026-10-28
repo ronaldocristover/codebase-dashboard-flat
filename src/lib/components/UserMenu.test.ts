@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it } from 'vitest';
 
 import UserMenu from './UserMenu.svelte';
@@ -49,16 +49,6 @@ describe('UserMenu', () => {
 		const form = signOut.closest('form');
 		expect(form?.getAttribute('method')).toBe('POST');
 		expect(form?.getAttribute('action')).toBe('/logout');
-	});
-
-	it('closes the menu when the sign out form is submitted', async () => {
-		render(UserMenu);
-		await fireEvent.click(screen.getByRole('button', { name: /RS/i }));
-
-		const form = screen.getByRole('menuitem', { name: /Sign out/i }).closest('form');
-		expect(form).toBeTruthy();
-
-		await fireEvent.submit(form as HTMLFormElement);
-		await waitFor(() => expect(screen.queryByText('Sign out')).toBeNull());
+		expect(form?.getAttribute('role')).toBe('none');
 	});
 });

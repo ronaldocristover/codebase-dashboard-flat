@@ -45,8 +45,9 @@ the server actually runs on.
   member. Everything resets when the server restarts; there is no persistence.
 - Endpoints: `GET /api/members`, `POST /api/members`, `GET /api/members/[id]`,
   `PATCH /api/members/[id]`, `GET /api/members/[id]/orders`.
-- Endpoints are unauthenticated. Acceptable only because this is a demo; a real
-  API needs auth on every route.
+- Endpoints answer `401 {"error":"Unauthorized"}` without a session, enforced once
+  in `src/hooks.server.ts`. There are no roles or per-route permissions; a real
+  API needs both.
 - Validation lives in `src/lib/utils/memberValidation.ts` so API handlers and
   forms share one rule set. Do not duplicate field rules in markup.
 - Pages read data through `fetch` in `+page.ts`. Do not import the store into
@@ -79,8 +80,10 @@ the server actually runs on.
 - API routes are `+server.ts` files under `src/routes/api/`; return `json(...)`
   and throw `error(...)` from `@sveltejs/kit`. Validate the body before touching
   the store.
-- Guard lives in `(dashboard)/+layout.ts` with `ssr = false`. Do not remove
-  `ssr = false` while auth is still an in-memory store.
+- Auth is a server session: `src/hooks.server.ts` reads the `tokoku_session`
+  cookie and sets `event.locals.user`. The guard lives in
+  `(dashboard)/+layout.server.ts`; `/api/*` answers `401` without a session.
+  `ssr` stays on for the dashboard.
 - Redirects use `redirect(303, '/login')` and are thrown, not returned.
 
 ## UI and styling
@@ -118,11 +121,11 @@ the server actually runs on.
 
 ## Boundaries to preserve
 
-- Auth is an in-memory simulation (`src/lib/stores/auth.ts`). The `shortcut:`
-  comment there explains the limit; do not remove it unless auth is replaced by a
-  server session.
-- The API is a dummy: in-memory, unauthenticated, resets on restart. Do not
-  present it as a backend.
+- Auth is a server session (`src/lib/server/session.ts` + `src/hooks.server.ts`).
+  Sessions live in process memory, so a restart logs everyone out; the `shortcut:`
+  comment in `session.ts` explains the limit.
+- The API is a dummy: in-memory, resets on restart, and only checks that a
+  session exists. Do not present it as a backend.
 - Menu items Products, Orders, and Reports intentionally have no pages.
 - There is no production adapter. Do not claim the app is deploy-ready.
 

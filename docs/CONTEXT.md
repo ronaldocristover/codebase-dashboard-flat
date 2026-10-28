@@ -52,20 +52,21 @@ src/
     components/                UI components + colocated tests
     components/form/           reusable form controls (inputs, date pickers, uploads)
     mock/                      sample data (members, orders, dashboard)
-    server/                    server-only modules (in-memory member store)
-    stores/                    auth + UI state (in-memory)
+    server/                    server-only modules (session, in-memory member store)
+    stores/                    UI state (sidebar, drawer)
     utils/                     format, validation, filter/sort/paginate (pure)
     types.ts                   domain types
   routes/
     layout.css                 @theme design tokens + body
     +layout.svelte             root (favicon)
     login/                     login page
+    logout/                    POST action that clears the session
     api/members/
       +server.ts               GET, POST   /api/members
       [id]/+server.ts          GET, PATCH  /api/members/[id]
       [id]/orders/+server.ts   GET        /api/members/[id]/orders
     (dashboard)/               shell: sidebar + top nav
-      +layout.ts               guard (ssr = false)
+      +layout.server.ts        guard (reads locals.user)
       +layout.svelte           shell
       +error.svelte            404 that keeps the shell
       +page.svelte             dashboard
@@ -90,7 +91,7 @@ src/
 - `src/lib/server/` is server-only. Only `+server.ts` files import it; pages get
   data through `fetch` in `+page.ts`.
 - Components take typed props; no global store for page state. Stores are
-  reserved for login status and sidebar/drawer state.
+  reserved for sidebar/drawer state; login status lives on the server.
 - UI copy is English. Currency keeps `Rp` plus Indonesian digit grouping
   (`toLocaleString('id-ID')`); dates use English month names.
 - Tailwind utilities directly in markup. Colors come from `@theme` tokens, not
@@ -99,12 +100,14 @@ src/
 
 ## Deliberate limits
 
-- **Mock auth.** `src/lib/stores/auth.ts` accepts any valid email plus a non-empty
-  password, held in memory. Refresh logs you out. The guard is UX, not security.
+- **Server session auth.** `src/hooks.server.ts` reads the `tokoku_session`
+  cookie, resolves it through `src/lib/server/session.ts`, and sets
+  `event.locals.user`. Sessions are in process memory, so a restart logs everyone
+  out.
 - **Dummy API.** `src/lib/server/memberStore.ts` keeps members in module-level
   arrays seeded from `src/lib/mock/members.ts`; orders are generated in
   `src/lib/mock/orders.ts`. Create and edit calls work until the server restarts,
-  then reset. Endpoints are unauthenticated.
+  then reset. Endpoints require a session and answer `401` without one.
 - **Mock data.** Member dates are relative to today (`isoDaysAgo`) so the
   7/30/90-day filters never come up empty.
 - **Dead menu.** Products, Orders, and Reports have no pages; they render as
@@ -125,7 +128,10 @@ src/
   stays thin and testable rules sit in `utils`.
 - Sidebar state lives in a module store, not `localStorage`: it resets on every
   refresh.
-- The guard is in `(dashboard)/+layout.ts` with `ssr = false`; the shell is not
-  rendered on the server.
+- The guard is in `(dashboard)/+layout.server.ts`; `ssr` stays on, and a module
+  store read during render was checked to be safe because it only mutates from
+  browser handlers.
+- `/logout` is a form action, not a client call, so the session is destroyed on
+  the server before the redirect.
 - Member pages were added on top of the dummy API rather than a real backend, to
   keep the repo dependency-free and runnable offline.
