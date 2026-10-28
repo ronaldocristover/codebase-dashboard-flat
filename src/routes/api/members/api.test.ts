@@ -173,6 +173,43 @@ describe('rate limit', () => {
 	});
 });
 
+describe('cache headers', () => {
+	it('marks a list response private and uncacheable', async () => {
+		const response = await getList(event());
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get('cache-control')).toBe('private, no-store');
+	});
+
+	it('marks detail, orders, create and update responses the same way', async () => {
+		const id = seed[1].id;
+		const responses = [
+			await getMember(event({ id })),
+			await getOrders(event({ id })),
+			await postMember(
+				event({}, { nama: 'Cache Test', email: 'cache@mail.com', hp: '0812-3456-7890', status: 'aktif' })
+			),
+			await patchMember(event({ id }, { nama: 'Renamed' }))
+		];
+
+		expect(responses.map((response) => response.status)).toEqual([200, 200, 201, 200]);
+		for (const response of responses) {
+			expect(response.headers.get('cache-control')).toBe('private, no-store');
+		}
+	});
+
+	it('marks a 429 response private too', async () => {
+		const address = '203.0.113.11';
+		const call = () => getList(event({}, undefined, '', address));
+
+		let blocked: Response | undefined;
+		for (let i = 0; i < 101; i += 1) blocked = await call();
+
+		expect(blocked?.status).toBe(429);
+		expect(blocked?.headers.get('cache-control')).toBe('private, no-store');
+	});
+});
+
 describe('unknown member', () => {
 	it('returns 404 from every member endpoint', async () => {
 		const params = { id: 'MBR-9999' };
